@@ -13,17 +13,32 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
+import { Formik } from "formik";
+import * as Yup from "yup";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getAllUsers, User } from "../api/auth";
 import { transfer, TransferResponse } from "../api/transactions";
 import { useAuth } from "../contexts/AuthContext";
 import { router } from "expo-router";
 
+const transferValidationSchema = Yup.object().shape({
+  amount: Yup.string()
+    .required("Amount is required")
+    .test("is-positive", "Amount must be greater than 0", (value) => {
+      if (!value) return false;
+      const num = parseFloat(value);
+      return !isNaN(num) && num > 0;
+    })
+    .test("is-valid-number", "Please enter a valid number", (value) => {
+      if (!value) return false;
+      return !isNaN(parseFloat(value));
+    }),
+});
+
 const BASE_URL = "https://react-bank-project.eapi.joincoded.com";
 
 export default function TransferPage() {
   const { username, isAuthenticated, token } = useAuth();
-  const [amount, setAmount] = useState("");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const queryClient = useQueryClient();
@@ -106,10 +121,10 @@ export default function TransferPage() {
       (user) =>
         user.username &&
         user.username.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        user.username !== username
+        user.username.toLowerCase() !== username?.toLowerCase()
     ) || [];
 
-  const handleTransfer = () => {
+  const handleTransfer = (values: { amount: string }) => {
     if (!selectedUser || !selectedUser.username) {
       Alert.alert("Error", "Please select a user to transfer to");
       return;
@@ -121,7 +136,7 @@ export default function TransferPage() {
       return;
     }
 
-    const transferAmount = parseFloat(amount);
+    const transferAmount = parseFloat(values.amount);
     if (isNaN(transferAmount) || transferAmount <= 0) {
       Alert.alert("Error", "Please enter a valid amount");
       return;
@@ -150,6 +165,24 @@ export default function TransferPage() {
     );
   };
 
+  // Only allow numbers and decimal point
+  const handleAmountChange = (
+    text: string,
+    setFieldValue: (field: string, value: any) => void
+  ) => {
+    // Remove any non-numeric characters except decimal point
+    const cleaned = text.replace(/[^0-9.]/g, "");
+    
+    // Ensure only one decimal point
+    const parts = cleaned.split(".");
+    if (parts.length > 2) {
+      // If more than one decimal point, keep only the first one
+      setFieldValue("amount", parts[0] + "." + parts.slice(1).join(""));
+    } else {
+      setFieldValue("amount", cleaned);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <StatusBar style="dark" />
@@ -164,37 +197,59 @@ export default function TransferPage() {
         <View style={styles.placeholder} />
       </View>
 
-      <View style={styles.formSection}>
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Amount</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter amount"
-            placeholderTextColor="#9CA3AF"
-            value={amount}
-            onChangeText={setAmount}
-            keyboardType="decimal-pad"
-            returnKeyType="done"
-            blurOnSubmit={true}
-            onSubmitEditing={Keyboard.dismiss}
-          />
-        </View>
+      <Formik
+        initialValues={{ amount: "" }}
+        validationSchema={transferValidationSchema}
+        onSubmit={handleTransfer}
+      >
+        {({
+          handleChange,
+          handleBlur,
+          handleSubmit,
+          setFieldValue,
+          values,
+          errors,
+          touched,
+        }) => (
+          <>
+            <View style={styles.formSection}>
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Amount</Text>
+                <TextInput
+                  style={[
+                    styles.input,
+                    errors.amount && touched.amount && styles.inputError,
+                  ]}
+                  placeholder="Enter amount"
+                  placeholderTextColor="#9CA3AF"
+                  value={values.amount}
+                  onChangeText={(text) => handleAmountChange(text, setFieldValue)}
+                  onBlur={handleBlur("amount")}
+                  keyboardType="decimal-pad"
+                  returnKeyType="done"
+                  blurOnSubmit={true}
+                  onSubmitEditing={Keyboard.dismiss}
+                />
+                {errors.amount && touched.amount && (
+                  <Text style={styles.errorText}>{errors.amount}</Text>
+                )}
+              </View>
 
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Search Users</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Search by username"
-            placeholderTextColor="#9CA3AF"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            autoCapitalize="none"
-            returnKeyType="search"
-            blurOnSubmit={true}
-            onSubmitEditing={Keyboard.dismiss}
-          />
-        </View>
-      </View>
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Search Users</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Search by username"
+                  placeholderTextColor="#9CA3AF"
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  autoCapitalize="none"
+                  returnKeyType="search"
+                  blurOnSubmit={true}
+                  onSubmitEditing={Keyboard.dismiss}
+                />
+              </View>
+            </View>
 
       <View style={styles.usersSection}>
         <Text style={styles.sectionTitle}>Select Recipient</Text>
@@ -275,22 +330,25 @@ export default function TransferPage() {
           </View>
         )}
 
-        <TouchableOpacity
-          style={[
-            styles.transferButton,
-            (!selectedUser || !amount || transferMutation.isPending) &&
-              styles.transferButtonDisabled,
-          ]}
-          onPress={handleTransfer}
-          disabled={!selectedUser || !amount || transferMutation.isPending}
-        >
-          {transferMutation.isPending ? (
-            <ActivityIndicator color="#FFFFFF" />
-          ) : (
-            <Text style={styles.transferButtonText}>Send Money</Text>
-          )}
-        </TouchableOpacity>
-      </View>
+            <TouchableOpacity
+              style={[
+                styles.transferButton,
+                (!selectedUser || !values.amount || transferMutation.isPending) &&
+                  styles.transferButtonDisabled,
+              ]}
+              onPress={() => handleSubmit()}
+              disabled={!selectedUser || !values.amount || transferMutation.isPending}
+            >
+              {transferMutation.isPending ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.transferButtonText}>Send Money</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+          </>
+        )}
+      </Formik>
 
       <TouchableOpacity
         style={styles.floatingButton}
@@ -359,6 +417,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E5E7EB",
   },
+  inputError: {
+    borderColor: "#EF4444",
+  },
+  errorText: {
+    fontSize: 12,
+    color: "#EF4444",
+    marginTop: 4,
+  },
   usersSection: {
     paddingHorizontal: 20,
     marginTop: 8,
@@ -415,10 +481,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#1E40AF",
     backgroundColor: "#EFF6FF",
-    shadowColor: "#1E40AF",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    boxShadow: "0px 2px 4px 0px rgba(30, 64, 175, 0.2)",
     elevation: 3,
   },
   userImage: {
@@ -481,10 +544,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginTop: 16,
-    shadowColor: "#1E40AF",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    boxShadow: "0px 4px 8px 0px rgba(30, 64, 175, 0.3)",
     elevation: 5,
   },
   transferButtonDisabled: {
@@ -505,10 +565,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#1E40AF",
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    boxShadow: "0px 4px 8px 0px rgba(0, 0, 0, 0.3)",
     elevation: 8,
   },
   floatingButtonText: {

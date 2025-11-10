@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect } from "react";
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import { StatusBar } from "expo-status-bar";
 import { useLocalSearchParams, router } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { getMyTransactions, Transaction } from "../api/transactions";
-import { getAllUsers, User } from "../api/auth";
+import { getAllUsers, User, getUserById } from "../api/auth";
 import { useAuth } from "../contexts/AuthContext";
 
 // Format large numbers with notation (K, M, B, etc.)
@@ -45,6 +45,9 @@ export default function TransactionDetailPage() {
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
   const { username, isAuthenticated } = useAuth();
 
+  console.log("Transaction Detail Page - URL Params:", params);
+  console.log("Transaction Detail Page - ID:", id);
+
   const {
     data: transactions,
     isLoading: transactionsLoading,
@@ -53,6 +56,14 @@ export default function TransactionDetailPage() {
     queryFn: getMyTransactions,
     enabled: isAuthenticated,
   });
+
+  // Log transactions when they're loaded
+  useEffect(() => {
+    if (transactions) {
+      console.log("All Transactions Loaded:", transactions.length);
+      console.log("All Transactions:", JSON.stringify(transactions, null, 2));
+    }
+  }, [transactions]);
 
   const {
     data: allUsers,
@@ -63,6 +74,7 @@ export default function TransactionDetailPage() {
   });
 
   // Find the transaction by ID
+  // MongoDB uses _id which can be alphanumeric strings, not just numbers
   const transaction = useMemo(() => {
     if (!transactions || transactions.length === 0) {
       console.log('No transactions available');
@@ -74,76 +86,202 @@ export default function TransactionDetailPage() {
       return null;
     }
     
-    // Handle ID as string or number
-    const transactionId = typeof id === 'string' ? parseInt(id, 10) : id;
-    if (isNaN(transactionId as number)) {
-      console.log('Invalid transaction ID format:', id, typeof id);
-      return null;
-    }
+    const idStr = id.toString();
+    console.log('Looking for transaction with ID:', idStr, 'Type:', typeof id);
+    console.log('Available transaction IDs:', transactions.map(t => ({ id: t._id ?? t.id, type: typeof (t._id ?? t.id) })));
     
-    console.log('Looking for transaction with ID:', transactionId, 'Type:', typeof transactionId);
-    console.log('Available transaction IDs:', transactions.map(t => ({ id: t.id, type: typeof t.id })));
-    
-    // Find transaction by comparing both as numbers and strings
-    // Check both 'id' and '_id' fields (MongoDB uses _id)
+    // Find transaction by comparing both '_id' and 'id' fields (MongoDB uses _id)
+    // Handle both numeric IDs and alphanumeric string IDs
     const found = transactions.find((t) => {
-      const tId = t.id ?? (t as any)._id;
+      const tId = t._id ?? t.id;
       if (tId === undefined || tId === null) return false;
       
-      // Try numeric comparison first
-      if (typeof tId === 'number' && typeof transactionId === 'number') {
-        return tId === transactionId;
+      // Try direct string comparison first (handles alphanumeric MongoDB _id)
+      if (tId.toString() === idStr) {
+        return true;
       }
-      // Fall back to string comparison
-      const matches = tId.toString() === id.toString() || tId.toString() === transactionId.toString();
-      if (matches) {
-        console.log('Found transaction match:', tId, '===', transactionId);
+      
+      // Try numeric comparison if both are numbers
+      const tIdNum = typeof tId === 'number' ? tId : (typeof tId === 'string' && !isNaN(Number(tId)) ? Number(tId) : null);
+      const idNum = !isNaN(Number(idStr)) ? Number(idStr) : null;
+      
+      if (tIdNum !== null && idNum !== null && tIdNum === idNum) {
+        return true;
       }
-      return matches;
+      
+      return false;
     });
     
     if (!found) {
-      console.log('Transaction not found. Looking for ID:', transactionId, 'Available IDs:', transactions.map(t => t.id ?? (t as any)._id));
+      console.log('Transaction not found. Looking for ID:', idStr, 'Available IDs:', transactions.map(t => t._id ?? t.id));
     } else {
-      const foundId = found.id ?? (found as any)._id;
+      const foundId = found._id ?? found.id;
       console.log('Transaction found:', foundId);
     }
     
     return found || null;
   }, [transactions, id]);
 
+  // Extract unique user IDs from transaction that aren't in allUsers
+  const missingUserIds = useMemo(() => {
+    if (!transaction || !allUsers) return [];
+    
+    // MongoDB uses _id, but some APIs might use id
+    const allUserIds = new Set(
+      allUsers.map(u => (u._id ?? u.id)?.toString()).filter(Boolean)
+    );
+    const allUsernames = new Set(allUsers.map(u => u.username?.toLowerCase()));
+    const missingIds: (string | number)[] = [];
+    
+    // Check 'from' field
+    if (transaction.from) {
+      const fromValue = transaction.from.toString();
+      // Skip if it's already a username (exists in usernames)
+      if (!allUsernames.has(fromValue.toLowerCase())) {
+        // Check if it's already in allUserIds (by string comparison)
+        const isInAllUserIds = allUserIds.has(fromValue);
+        // If not in allUserIds and not already in missingIds, add it
+        if (!isInAllUserIds && !missingIds.includes(fromValue) && !missingIds.includes(transaction.from)) {
+          missingIds.push(transaction.from);
+        }
+      }
+    }
+    
+    // Check 'to' field
+    if (transaction.to) {
+      const toValue = transaction.to.toString();
+      // Skip if it's already a username (exists in usernames)
+      if (!allUsernames.has(toValue.toLowerCase())) {
+        // Check if it's already in allUserIds (by string comparison)
+        const isInAllUserIds = allUserIds.has(toValue);
+        // If not in allUserIds and not already in missingIds, add it
+        if (!isInAllUserIds && !missingIds.includes(toValue) && !missingIds.includes(transaction.to)) {
+          missingIds.push(transaction.to);
+        }
+      }
+    }
+    
+    if (missingIds.length > 0) {
+      console.log("Missing user IDs found in transaction:", missingIds);
+    }
+    
+    return missingIds;
+  }, [transaction, allUsers]);
+
+  // Fetch missing users by ID
+  const missingUsersQueries = useQuery({
+    queryKey: ["missingUsers", missingUserIds],
+    queryFn: async () => {
+      const users: User[] = [];
+      const errors: { userId: string | number; error: any }[] = [];
+      
+      for (const userId of missingUserIds) {
+        try {
+          const user = await getUserById(userId);
+          if (user && user.username) {
+            users.push(user);
+            console.log(`Successfully fetched user ${userId}: ${user.username}`);
+          }
+        } catch (error: any) {
+          const errorMessage = error?.response?.data?.message || error?.message || 'Unknown error';
+          const status = error?.response?.status;
+          errors.push({ userId, error });
+          
+          if (status === 500) {
+            console.warn(`Server error fetching user ${userId} (500): The user may not exist or the API endpoint may have issues`);
+          } else if (status === 404) {
+            console.warn(`User ${userId} not found (404)`);
+          } else {
+            console.warn(`Failed to fetch user ${userId} (${status}):`, errorMessage);
+          }
+        }
+      }
+      
+      return users;
+    },
+    enabled: isAuthenticated && missingUserIds.length > 0,
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Combine allUsers with fetched missing users
+  const allUsersWithMissing = useMemo(() => {
+    const combined = [...(allUsers || [])];
+    if (missingUsersQueries.data && missingUsersQueries.data.length > 0) {
+      console.log("Fetched missing users for transaction detail:", missingUsersQueries.data);
+      combined.push(...missingUsersQueries.data);
+    }
+    return combined;
+  }, [allUsers, missingUsersQueries.data]);
+
   // Create user ID to username map
+  // MongoDB uses _id, but some APIs might use id
+  // Use allUsersWithMissing which includes both allUsers and fetched missing users
   const userIdToUsernameMap = useMemo(() => {
     const map = new Map<string | number, string>();
-    if (allUsers) {
-      allUsers.forEach((user) => {
-        if (user.id !== undefined) {
-          map.set(user.id, user.username);
+    if (allUsersWithMissing) {
+      allUsersWithMissing.forEach((user) => {
+        const userId = user._id ?? user.id;
+        if (userId !== undefined) {
+          // Store both the original ID and its string representation for lookup
+          map.set(userId, user.username);
+          map.set(userId.toString(), user.username);
         }
       });
     }
     return map;
-  }, [allUsers]);
+  }, [allUsersWithMissing]);
 
   // Helper function to get username from ID or return the value if it's already a username
+  // Handles both numeric IDs and alphanumeric string IDs (MongoDB _id)
   const getUsername = (
     value: string | number | undefined
   ): string | undefined => {
     if (!value) return undefined;
-    const numericValue =
-      typeof value === "string" ? parseInt(value, 10) : value;
-    if (!isNaN(numericValue) && userIdToUsernameMap.has(numericValue)) {
-      return userIdToUsernameMap.get(numericValue);
+    
+    const valueStr = value.toString();
+    
+    // First, try to find it directly in the map (handles both string and number keys)
+    const directMatch = userIdToUsernameMap.get(value) || userIdToUsernameMap.get(valueStr);
+    if (directMatch) {
+      return directMatch;
     }
-    return typeof value === "string" ? value : undefined;
+    
+    // If not found, check if the value itself is a username (exists in map values)
+    // Username comparison should be case-insensitive
+    for (const [id, username] of userIdToUsernameMap.entries()) {
+      if (username.toLowerCase() === valueStr.toLowerCase()) {
+        return username; // Return the actual username from map to preserve casing
+      }
+    }
+    
+    // If it's a string and not found in the map, it might be:
+    // 1. An alphanumeric ID that we haven't fetched yet
+    // 2. Already a username
+    // For now, if it's not in our map, assume it's a username and return it as-is
+    // This will display the ID/username until we can fetch the actual username
+    return valueStr;
   };
 
   // Format transaction details
   const transactionDetails = useMemo(() => {
     if (!transaction) return null;
 
+    console.log("=== Transaction Details ===");
+    console.log("Raw Transaction Object:", JSON.stringify(transaction, null, 2));
+    console.log("Transaction ID:", transaction._id ?? transaction.id);
+    console.log("Transaction Type:", transaction.type);
+    console.log("Transaction Amount:", transaction.amount);
+    console.log("Transaction From:", transaction.from);
+    console.log("Transaction To:", transaction.to);
+    console.log("Transaction Created At:", transaction.createdAt);
+
     const fromUsername = getUsername(transaction.from);
     const toUsername = getUsername(transaction.to);
+    
+    console.log("From Username:", fromUsername);
+    console.log("To Username:", toUsername);
+    console.log("Current Username:", username);
 
     // Determine if transaction is income or expense
     let isIncome = false;
@@ -154,10 +292,11 @@ export default function TransactionDetailPage() {
     } else if (transaction.type === "withdraw") {
       isExpense = true;
     } else if (transaction.type === "transfer") {
-      if (fromUsername && fromUsername !== username) {
+      // Username comparison should be case-insensitive
+      if (fromUsername && fromUsername.toLowerCase() !== username?.toLowerCase()) {
         isIncome = true;
       }
-      if (toUsername && toUsername !== username) {
+      if (toUsername && toUsername.toLowerCase() !== username?.toLowerCase()) {
         isExpense = true;
       }
     }
@@ -184,8 +323,11 @@ export default function TransactionDetailPage() {
       transactionType = "Transfer";
     }
 
-    return {
-      id: transaction.id,
+    // MongoDB uses _id, but some APIs might use id
+    const transactionId = transaction._id ?? transaction.id;
+    
+    const details = {
+      id: transactionId,
       type: transactionType,
       amount: transaction.amount,
       formattedAmount: isIncome
@@ -199,6 +341,15 @@ export default function TransactionDetailPage() {
       time: formattedTime,
       fullDate: transaction.createdAt,
     };
+
+    console.log("Formatted Transaction Details:", JSON.stringify(details, null, 2));
+    console.log("Is Income:", isIncome);
+    console.log("Is Expense:", isExpense);
+    console.log("Formatted Date:", formattedDate);
+    console.log("Formatted Time:", formattedTime);
+    console.log("===========================");
+
+    return details;
   }, [transaction, username, userIdToUsernameMap]);
 
   if (transactionsLoading) {
@@ -291,7 +442,7 @@ export default function TransactionDetailPage() {
 
           <View style={styles.detailSection}>
             <Text style={styles.detailLabel}>Transaction ID</Text>
-            <Text style={styles.detailValue}>#{transaction?.id ?? (transaction as any)?._id ?? transactionDetails.id}</Text>
+            <Text style={styles.detailValue}>#{transaction?._id ?? transaction?.id ?? transactionDetails.id}</Text>
           </View>
 
           <View style={styles.detailSection}>
@@ -307,7 +458,7 @@ export default function TransactionDetailPage() {
           {transactionDetails.type === "Transfer" && (
             <>
               {transactionDetails.fromUsername &&
-                transactionDetails.fromUsername !== username && (
+                transactionDetails.fromUsername.toLowerCase() !== username?.toLowerCase() && (
                   <View style={styles.detailSection}>
                     <Text style={styles.detailLabel}>From</Text>
                     <Text style={styles.detailValue}>
@@ -316,7 +467,7 @@ export default function TransactionDetailPage() {
                   </View>
                 )}
               {transactionDetails.toUsername &&
-                transactionDetails.toUsername !== username && (
+                transactionDetails.toUsername.toLowerCase() !== username?.toLowerCase() && (
                   <View style={styles.detailSection}>
                     <Text style={styles.detailLabel}>To</Text>
                     <Text style={styles.detailValue}>
@@ -382,6 +533,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: "#6B7280",
+    fontWeight: "500",
+  },
   errorContainer: {
     flex: 1,
     justifyContent: "center",
@@ -403,10 +560,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderRadius: 20,
     padding: 24,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    boxShadow: "0px 2px 8px 0px rgba(0, 0, 0, 0.1)",
     elevation: 3,
   },
   amountSection: {

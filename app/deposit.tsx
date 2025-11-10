@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   View,
   Text,
@@ -8,18 +8,32 @@ import {
   ActivityIndicator,
   Alert,
   Keyboard,
-  TouchableWithoutFeedback,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
+import { Formik } from "formik";
+import * as Yup from "yup";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deposit, DepositResponse } from "../api/transactions";
 import { useAuth } from "../contexts/AuthContext";
 import { router } from "expo-router";
 
+const depositValidationSchema = Yup.object().shape({
+  amount: Yup.string()
+    .required("Amount is required")
+    .test("is-positive", "Amount must be greater than 0", (value) => {
+      if (!value) return false;
+      const num = parseFloat(value);
+      return !isNaN(num) && num > 0;
+    })
+    .test("is-valid-number", "Please enter a valid number", (value) => {
+      if (!value) return false;
+      return !isNaN(parseFloat(value));
+    }),
+});
+
 export default function DepositPage() {
-  const { isAuthenticated, token } = useAuth();
-  const [amount, setAmount] = useState("");
+  const { isAuthenticated, token, userId } = useAuth();
   const queryClient = useQueryClient();
 
   const depositMutation = useMutation<DepositResponse, Error, { amount: number }>({
@@ -64,19 +78,14 @@ export default function DepositPage() {
     },
   });
 
-  const handleDeposit = () => {
-    if (!amount || amount.trim() === "") {
-      Alert.alert("Error", "Please enter an amount");
-      return;
-    }
-
+  const handleDeposit = (values: { amount: string }) => {
     if (!token) {
       Alert.alert("Error", "You are not authenticated. Please log in again.");
       router.replace("/login");
       return;
     }
 
-    const depositAmount = parseFloat(amount);
+    const depositAmount = parseFloat(values.amount);
     if (isNaN(depositAmount) || depositAmount <= 0) {
       Alert.alert("Error", "Please enter a valid amount");
       return;
@@ -101,7 +110,10 @@ export default function DepositPage() {
   };
 
   // Only allow numbers and decimal point
-  const handleAmountChange = (text: string) => {
+  const handleAmountChange = (
+    text: string,
+    setFieldValue: (field: string, value: any) => void
+  ) => {
     // Remove any non-numeric characters except decimal point
     const cleaned = text.replace(/[^0-9.]/g, "");
     
@@ -109,9 +121,9 @@ export default function DepositPage() {
     const parts = cleaned.split(".");
     if (parts.length > 2) {
       // If more than one decimal point, keep only the first one
-      setAmount(parts[0] + "." + parts.slice(1).join(""));
+      setFieldValue("amount", parts[0] + "." + parts.slice(1).join(""));
     } else {
-      setAmount(cleaned);
+      setFieldValue("amount", cleaned);
     }
   };
 
@@ -128,55 +140,77 @@ export default function DepositPage() {
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <StatusBar style="dark" />
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => router.back()}
-            >
-              <Text style={styles.backButtonIcon}>←</Text>
-            </TouchableOpacity>
-            <Text style={styles.title}>Deposit to Account</Text>
-            <View style={styles.placeholder} />
-          </View>
-
-          <View style={styles.formSection}>
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Amount (KWD)</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter amount"
-                placeholderTextColor="#9CA3AF"
-                value={amount}
-                onChangeText={handleAmountChange}
-                keyboardType="decimal-pad"
-                returnKeyType="done"
-                blurOnSubmit={true}
-                onBlur={Keyboard.dismiss}
-                onSubmitEditing={Keyboard.dismiss}
-              />
-            </View>
-          </View>
-
-          <View style={styles.bottomSection}>
-            <TouchableOpacity
-              style={[
-                styles.depositButton,
-                (!amount || depositMutation.isPending) && styles.depositButtonDisabled,
-              ]}
-              onPress={handleDeposit}
-              disabled={!amount || depositMutation.isPending}
-            >
-              {depositMutation.isPending ? (
-                <ActivityIndicator color="#FFFFFF" />
-              ) : (
-                <Text style={styles.depositButtonText}>Deposit Money</Text>
-              )}
-            </TouchableOpacity>
-          </View>
+      <View style={styles.content}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.backButtonIcon}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.title}>Deposit to Account</Text>
+          <View style={styles.placeholder} />
         </View>
-      </TouchableWithoutFeedback>
+
+        <Formik
+          initialValues={{ amount: "" }}
+          validationSchema={depositValidationSchema}
+          onSubmit={handleDeposit}
+        >
+          {({
+            handleChange,
+            handleBlur,
+            handleSubmit,
+            setFieldValue,
+            values,
+            errors,
+            touched,
+          }) => (
+            <>
+              <View style={styles.formSection}>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>Amount (KWD)</Text>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      errors.amount && touched.amount && styles.inputError,
+                    ]}
+                    placeholder="Enter amount"
+                    placeholderTextColor="#9CA3AF"
+                    value={values.amount}
+                    onChangeText={(text) => handleAmountChange(text, setFieldValue)}
+                    onBlur={handleBlur("amount")}
+                    keyboardType="decimal-pad"
+                    returnKeyType="done"
+                    blurOnSubmit={true}
+                    onSubmitEditing={Keyboard.dismiss}
+                  />
+                  {errors.amount && touched.amount && (
+                    <Text style={styles.errorText}>{errors.amount}</Text>
+                  )}
+                </View>
+              </View>
+
+              <View style={styles.bottomSection}>
+                <TouchableOpacity
+                  style={[
+                    styles.depositButton,
+                    (!values.amount || depositMutation.isPending) && styles.depositButtonDisabled,
+                  ]}
+                  onPress={() => handleSubmit()}
+                  disabled={!values.amount || depositMutation.isPending}
+                >
+                  {depositMutation.isPending ? (
+                    <ActivityIndicator color="#FFFFFF" />
+                  ) : (
+                    <Text style={styles.depositButtonText}>Deposit Money</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+        </Formik>
+      </View>
     </SafeAreaView>
   );
 }
@@ -239,6 +273,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E5E7EB",
   },
+  inputError: {
+    borderColor: "#EF4444",
+  },
+  errorText: {
+    fontSize: 12,
+    color: "#EF4444",
+    marginTop: 4,
+  },
   bottomSection: {
     paddingHorizontal: 20,
     paddingBottom: 20,
@@ -251,10 +293,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginTop: 16,
-    shadowColor: "#1E40AF",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    boxShadow: "0px 4px 8px 0px rgba(30, 64, 175, 0.3)",
     elevation: 5,
   },
   depositButtonDisabled: {

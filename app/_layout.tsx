@@ -5,6 +5,7 @@ import React, { useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider, useAuth } from "../contexts/AuthContext";
 import { ActivityIndicator, View } from "react-native";
+import { Skeleton } from "../components/Skeleton";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -49,9 +50,12 @@ function RootLayoutNav() {
           justifyContent: "center",
           alignItems: "center",
           backgroundColor: "#F5F7FA",
+          padding: 20,
         }}
       >
-        <ActivityIndicator size="large" color="#1E40AF" />
+        <Skeleton width={200} height={200} borderRadius={100} />
+        <Skeleton width={150} height={24} borderRadius={4} style={{ marginTop: 24 }} />
+        <Skeleton width={100} height={16} borderRadius={4} style={{ marginTop: 12 }} />
       </View>
     );
   }

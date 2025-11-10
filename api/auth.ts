@@ -12,7 +12,8 @@ export interface RegisterRequest {
 }
 
 export interface RegisterResponse {
-  id: number;
+  id?: number;
+  _id?: string | number;
   username: string;
   token: string;
   message: string;
@@ -23,7 +24,8 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  id: number;
+  id?: number;
+  _id?: string | number;
   username: string;
   token: string;
   message: string;
@@ -75,7 +77,8 @@ export const loginUser = async (data: LoginRequest): Promise<LoginResponse> => {
 
 // Get your profile
 export interface UserProfile {
-  id: number;
+  id?: number;
+  _id?: string | number;
   username: string;
   image?: string;
   balance?: number;
@@ -93,7 +96,8 @@ export const getMyProfile = async (): Promise<UserProfile> => {
 
 // Get all users
 export interface User {
-  id: number;
+  id?: number;
+  _id?: string | number;
   username: string;
   image?: string;
   [key: string]: any;
@@ -108,8 +112,8 @@ export const getAllUsers = async (): Promise<User[]> => {
   }
 };
 
-// Get user info by userId
-export const getUserById = async (userId: number): Promise<User> => {
+// Get user info by userId (can be string or number since IDs can be alphanumeric)
+export const getUserById = async (userId: string | number): Promise<User> => {
   try {
     const response = await api.get<User>(
       `/mini-project/api/auth/user/${userId}`
@@ -143,11 +147,26 @@ export const updateProfile = async (
   const { image } = data;
   const formData = new FormData();
 
-  formData.append("image", {
-    uri: image.uri,
-    type: image.type,
-    name: image.name,
-  } as any);
+  // Handle web (base64) vs native (file URI) differently
+  if (typeof window !== "undefined" && image.uri.startsWith("data:")) {
+    // Web: Convert base64 data URL to Blob
+    const base64Data = image.uri.split(",")[1] || image.uri;
+    const byteCharacters = atob(base64Data);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: image.type || "image/jpeg" });
+    formData.append("image", blob, image.name);
+  } else {
+    // Native: Use the file URI format
+    formData.append("image", {
+      uri: image.uri,
+      type: image.type,
+      name: image.name,
+    } as any);
+  }
 
   try {
     const response = await api.put<UpdateProfileResponse>(

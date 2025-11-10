@@ -3,7 +3,8 @@ import api from ".";
 
 // Get your transactions
 export interface Transaction {
-  id: number;
+  id?: number;
+  _id?: string | number;
   type: "deposit" | "withdraw" | "transfer";
   amount: number;
   from?: string;

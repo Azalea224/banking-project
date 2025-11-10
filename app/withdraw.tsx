@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   View,
   Text,
@@ -8,19 +8,33 @@ import {
   ActivityIndicator,
   Alert,
   Keyboard,
-  TouchableWithoutFeedback,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
+import { Formik } from "formik";
+import * as Yup from "yup";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { withdraw, WithdrawResponse } from "../api/transactions";
 import { getMyProfile, UserProfile } from "../api/auth";
 import { useAuth } from "../contexts/AuthContext";
 import { router } from "expo-router";
 
+const withdrawValidationSchema = Yup.object().shape({
+  amount: Yup.string()
+    .required("Amount is required")
+    .test("is-positive", "Amount must be greater than 0", (value) => {
+      if (!value) return false;
+      const num = parseFloat(value);
+      return !isNaN(num) && num > 0;
+    })
+    .test("is-valid-number", "Please enter a valid number", (value) => {
+      if (!value) return false;
+      return !isNaN(parseFloat(value));
+    }),
+});
+
 export default function WithdrawPage() {
   const { isAuthenticated, token } = useAuth();
-  const [amount, setAmount] = useState("");
   const queryClient = useQueryClient();
 
   const {
@@ -74,19 +88,14 @@ export default function WithdrawPage() {
     },
   });
 
-  const handleWithdraw = () => {
-    if (!amount || amount.trim() === "") {
-      Alert.alert("Error", "Please enter an amount");
-      return;
-    }
-
+  const handleWithdraw = (values: { amount: string }) => {
     if (!token) {
       Alert.alert("Error", "You are not authenticated. Please log in again.");
       router.replace("/login");
       return;
     }
 
-    const withdrawAmount = parseFloat(amount);
+    const withdrawAmount = parseFloat(values.amount);
     if (isNaN(withdrawAmount) || withdrawAmount <= 0) {
       Alert.alert("Error", "Please enter a valid amount");
       return;
@@ -146,7 +155,10 @@ export default function WithdrawPage() {
   };
 
   // Only allow numbers and decimal point
-  const handleAmountChange = (text: string) => {
+  const handleAmountChange = (
+    text: string,
+    setFieldValue: (field: string, value: any) => void
+  ) => {
     // Remove any non-numeric characters except decimal point
     const cleaned = text.replace(/[^0-9.]/g, "");
     
@@ -154,9 +166,9 @@ export default function WithdrawPage() {
     const parts = cleaned.split(".");
     if (parts.length > 2) {
       // If more than one decimal point, keep only the first one
-      setAmount(parts[0] + "." + parts.slice(1).join(""));
+      setFieldValue("amount", parts[0] + "." + parts.slice(1).join(""));
     } else {
-      setAmount(cleaned);
+      setFieldValue("amount", cleaned);
     }
   };
 
@@ -173,82 +185,104 @@ export default function WithdrawPage() {
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <StatusBar style="dark" />
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => router.back()}
-            >
-              <Text style={styles.backButtonIcon}>←</Text>
-            </TouchableOpacity>
-            <Text style={styles.title}>Withdraw from Account</Text>
-            <View style={styles.placeholder} />
-          </View>
-
-          <View style={styles.formSection}>
-            <View style={styles.balanceInfo}>
-              <Text style={styles.balanceLabel}>Available Balance</Text>
-              {profileLoading ? (
-                <ActivityIndicator size="small" color="#1E40AF" />
-              ) : (
-                <Text style={styles.balanceAmount}>
-                  {profile?.balance?.toFixed(3) || "0.000"} KWD
-                </Text>
-              )}
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Amount (KWD)</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter amount"
-                placeholderTextColor="#9CA3AF"
-                value={amount}
-                onChangeText={handleAmountChange}
-                keyboardType="decimal-pad"
-                returnKeyType="done"
-                blurOnSubmit={true}
-                onBlur={Keyboard.dismiss}
-                onSubmitEditing={Keyboard.dismiss}
-              />
-            </View>
-          </View>
-
-          <View style={styles.bottomSection}>
-            <TouchableOpacity
-              style={[
-                styles.withdrawButton,
-                (!amount || withdrawMutation.isPending) && styles.withdrawButtonDisabled,
-              ]}
-              onPress={handleWithdraw}
-              disabled={!amount || withdrawMutation.isPending}
-            >
-              {withdrawMutation.isPending ? (
-                <ActivityIndicator color="#FFFFFF" />
-              ) : (
-                <Text style={styles.withdrawButtonText}>Withdraw Money</Text>
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.withdrawAllButton,
-                (profileLoading || !profile?.balance || profile.balance <= 0 || withdrawMutation.isPending) &&
-                  styles.withdrawAllButtonDisabled,
-              ]}
-              onPress={handleWithdrawAll}
-              disabled={profileLoading || !profile?.balance || profile.balance <= 0 || withdrawMutation.isPending}
-            >
-              {withdrawMutation.isPending ? (
-                <ActivityIndicator color="#1E40AF" />
-              ) : (
-                <Text style={styles.withdrawAllButtonText}>Withdraw All</Text>
-              )}
-            </TouchableOpacity>
-          </View>
+      <View style={styles.content}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.backButtonIcon}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.title}>Withdraw from Account</Text>
+          <View style={styles.placeholder} />
         </View>
-      </TouchableWithoutFeedback>
+
+        <Formik
+          initialValues={{ amount: "" }}
+          validationSchema={withdrawValidationSchema}
+          onSubmit={handleWithdraw}
+        >
+          {({
+            handleChange,
+            handleBlur,
+            handleSubmit,
+            setFieldValue,
+            values,
+            errors,
+            touched,
+          }) => (
+            <>
+              <View style={styles.formSection}>
+                <View style={styles.balanceInfo}>
+                  <Text style={styles.balanceLabel}>Available Balance</Text>
+                  {profileLoading ? (
+                    <ActivityIndicator size="small" color="#1E40AF" />
+                  ) : (
+                    <Text style={styles.balanceAmount}>
+                      {profile?.balance?.toFixed(3) || "0.000"} KWD
+                    </Text>
+                  )}
+                </View>
+
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>Amount (KWD)</Text>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      errors.amount && touched.amount && styles.inputError,
+                    ]}
+                    placeholder="Enter amount"
+                    placeholderTextColor="#9CA3AF"
+                    value={values.amount}
+                    onChangeText={(text) => handleAmountChange(text, setFieldValue)}
+                    onBlur={handleBlur("amount")}
+                    keyboardType="decimal-pad"
+                    returnKeyType="done"
+                    blurOnSubmit={true}
+                    onSubmitEditing={Keyboard.dismiss}
+                  />
+                  {errors.amount && touched.amount && (
+                    <Text style={styles.errorText}>{errors.amount}</Text>
+                  )}
+                </View>
+              </View>
+
+              <View style={styles.bottomSection}>
+                <TouchableOpacity
+                  style={[
+                    styles.withdrawButton,
+                    (!values.amount || withdrawMutation.isPending) && styles.withdrawButtonDisabled,
+                  ]}
+                  onPress={() => handleSubmit()}
+                  disabled={!values.amount || withdrawMutation.isPending}
+                >
+                  {withdrawMutation.isPending ? (
+                    <ActivityIndicator color="#FFFFFF" />
+                  ) : (
+                    <Text style={styles.withdrawButtonText}>Withdraw Money</Text>
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.withdrawAllButton,
+                    (profileLoading || !profile?.balance || profile.balance <= 0 || withdrawMutation.isPending) &&
+                      styles.withdrawAllButtonDisabled,
+                  ]}
+                  onPress={handleWithdrawAll}
+                  disabled={profileLoading || !profile?.balance || profile.balance <= 0 || withdrawMutation.isPending}
+                >
+                  {withdrawMutation.isPending ? (
+                    <ActivityIndicator color="#1E40AF" />
+                  ) : (
+                    <Text style={styles.withdrawAllButtonText}>Withdraw All</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+        </Formik>
+      </View>
     </SafeAreaView>
   );
 }
@@ -330,6 +364,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E5E7EB",
   },
+  inputError: {
+    borderColor: "#EF4444",
+  },
+  errorText: {
+    fontSize: 12,
+    color: "#EF4444",
+    marginTop: 4,
+  },
   bottomSection: {
     paddingHorizontal: 20,
     paddingBottom: 20,
@@ -342,10 +384,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginTop: 16,
-    shadowColor: "#1E40AF",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    boxShadow: "0px 4px 8px 0px rgba(30, 64, 175, 0.3)",
     elevation: 5,
   },
   withdrawButtonDisabled: {
