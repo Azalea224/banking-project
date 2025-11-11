@@ -637,7 +637,7 @@ export default function HomePage() {
         <View style={styles.transactionsContainer}>
           <View style={styles.transactionsHeader}>
             <Text style={styles.sectionTitle}>Recent Transactions</Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push("/transactions")}>
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
           </View>

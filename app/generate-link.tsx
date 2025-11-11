@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useMemo } from "react";
 import {
   View,
   Text,
@@ -10,12 +10,16 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   Platform,
+  Share,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
+import * as Clipboard from "expo-clipboard";
 import { Formik } from "formik";
 import * as Yup from "yup";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../contexts/AuthContext";
+import { getMyProfile, UserProfile } from "../api/auth";
 import { router } from "expo-router";
 
 const generateLinkValidationSchema = Yup.object().shape({
@@ -33,6 +37,49 @@ const generateLinkValidationSchema = Yup.object().shape({
 
 export default function GenerateLinkPage() {
   const { isAuthenticated, userId } = useAuth();
+  const queryClient = useQueryClient();
+
+  // Fetch profile (for future use, but userId comes from auth context)
+  const {
+    data: profile,
+    isLoading: profileLoading,
+    error: profileError,
+  } = useQuery<UserProfile>({
+    queryKey: ["myProfile"],
+    queryFn: getMyProfile,
+    enabled: isAuthenticated,
+    retry: 2,
+  });
+
+  // Get _id from auth context (stored during login) or from profile as fallback
+  const _id = useMemo(() => {
+    // First try userId from auth context (most reliable)
+    if (userId) {
+      console.log("GenerateLinkPage - Using userId from auth context:", userId);
+      return userId;
+    }
+    // Fallback to profile if available
+    if (profile) {
+      const profileId = profile._id ?? profile.id;
+      console.log("GenerateLinkPage - Profile data:", profile);
+      console.log("GenerateLinkPage - Using _id from profile:", profileId);
+      return profileId;
+    }
+    console.log("GenerateLinkPage - No _id available yet");
+    return null;
+  }, [userId, profile]);
+
+  // Debug logging
+  useEffect(() => {
+    console.log("GenerateLinkPage - Debug state:", {
+      isAuthenticated,
+      profileLoading,
+      profileError,
+      profile,
+      _id,
+      buttonDisabled: !_id || profileLoading,
+    });
+  }, [isAuthenticated, profileLoading, profileError, profile, _id]);
 
   // Only allow numbers and decimal point
   const handleAmountChange = (
@@ -41,7 +88,7 @@ export default function GenerateLinkPage() {
   ) => {
     // Remove any non-numeric characters except decimal point
     const cleaned = text.replace(/[^0-9.]/g, "");
-    
+
     // Ensure only one decimal point
     const parts = cleaned.split(".");
     let finalValue = cleaned;
@@ -49,16 +96,42 @@ export default function GenerateLinkPage() {
       // If more than one decimal point, keep only the first one
       finalValue = parts[0] + "." + parts.slice(1).join("");
     }
-    
+
     // Update the field value
     setFieldValue("amount", finalValue);
   };
 
-  const generateAndCopyLink = (amount: string) => {
-    if (!userId) {
-      Alert.alert("Error", "Unable to generate link. Please try again.");
+  const generateAndCopyLink = async (amount: string) => {
+    console.log("GenerateLinkPage - generateAndCopyLink called");
+    console.log("GenerateLinkPage - _id:", _id);
+    console.log("GenerateLinkPage - profile:", profile);
+    console.log("GenerateLinkPage - profileLoading:", profileLoading);
+
+    if (!_id) {
+      if (profileLoading) {
+        Alert.alert("Please wait", "Loading user information...");
+        return;
+      }
+      if (profileError) {
+        console.error("GenerateLinkPage - Profile error:", profileError);
+        Alert.alert(
+          "Error",
+          "Failed to load user information. Please try again later."
+        );
+        return;
+      }
+      console.error("GenerateLinkPage - No _id available");
+      Alert.alert(
+        "Error",
+        "Unable to generate link. User information not available. Please try again."
+      );
       return;
     }
+
+    // Generate the link path (works with expo-router)
+    const linkPath = `/deposit-link?userId=${encodeURIComponent(
+      String(_id)
+    )}&amount=${encodeURIComponent(amount || "0")}`;
 
     let link = "";
     if (Platform.OS === "web") {
@@ -68,30 +141,35 @@ export default function GenerateLinkPage() {
         const pathParts = currentPath.split("/").filter(Boolean);
         pathParts.pop();
         const basePath = pathParts.length > 0 ? "/" + pathParts.join("/") : "";
-        link = `${origin}${basePath}/deposit-link?userId=${encodeURIComponent(String(userId))}&amount=${encodeURIComponent(amount || "0")}`;
+        link = `${origin}${basePath}${linkPath}`;
       } else {
-        link = `/deposit-link?userId=${encodeURIComponent(String(userId))}&amount=${encodeURIComponent(amount || "0")}`;
+        link = linkPath;
       }
     } else {
-      link = `/deposit-link?userId=${encodeURIComponent(String(userId))}&amount=${encodeURIComponent(amount || "0")}`;
+      // For mobile, use the relative path that expo-router can handle
+      // When shared, users can open it within the app
+      link = linkPath;
     }
 
     if (Platform.OS === "web") {
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(link).then(() => {
-          if (typeof window !== "undefined" && window.alert) {
-            window.alert("Payment link copied to clipboard!");
-          } else {
-            Alert.alert("Success", "Payment link copied to clipboard!");
-          }
-        }).catch((err) => {
-          console.error("Failed to copy to clipboard:", err);
-          if (typeof window !== "undefined" && window.prompt) {
-            window.prompt("Copy this link:", link);
-          } else {
-            Alert.alert("Payment Link", link);
-          }
-        });
+        navigator.clipboard
+          .writeText(link)
+          .then(() => {
+            if (typeof window !== "undefined" && window.alert) {
+              window.alert("Payment link copied to clipboard!");
+            } else {
+              Alert.alert("Success", "Payment link copied to clipboard!");
+            }
+          })
+          .catch((err) => {
+            console.error("Failed to copy to clipboard:", err);
+            if (typeof window !== "undefined" && window.prompt) {
+              window.prompt("Copy this link:", link);
+            } else {
+              Alert.alert("Payment Link", link);
+            }
+          });
       } else {
         if (typeof window !== "undefined" && window.prompt) {
           window.prompt("Copy this link:", link);
@@ -100,10 +178,95 @@ export default function GenerateLinkPage() {
         }
       }
     } else {
-      Alert.alert("Payment Link", link, [
-        { text: "Copy", onPress: () => {} },
-        { text: "Open", onPress: () => router.push(`/deposit-link?userId=${encodeURIComponent(String(userId))}&amount=${encodeURIComponent(amount || "0")}`) },
-      ]);
+      // Mobile: Show link and offer copy/share options
+      try {
+        // Try to copy to clipboard first
+        await Clipboard.setStringAsync(link);
+        console.log("Link copied to clipboard successfully");
+
+        // Show alert with options
+        Alert.alert(
+          "Payment Link Generated",
+          `Link: ${link}\n\nLink has been copied to clipboard.`,
+          [
+            {
+              text: "Share",
+              onPress: async () => {
+                try {
+                  const shareMessage = `Payment Link\n\n${link}\n\nUse this link in the app to send money.`;
+                  const result = await Share.share({
+                    message: shareMessage,
+                  });
+                  if (result.action === Share.sharedAction) {
+                    console.log("Link shared successfully");
+                  }
+                } catch (error) {
+                  console.error("Error sharing:", error);
+                  Alert.alert(
+                    "Share Failed",
+                    "The link has been copied to clipboard. You can paste it manually."
+                  );
+                }
+              },
+            },
+            {
+              text: "Open Link",
+              onPress: () => {
+                if (_id) {
+                  router.push(
+                    `/deposit-link?userId=${encodeURIComponent(
+                      String(_id)
+                    )}&amount=${encodeURIComponent(amount || "0")}`
+                  );
+                }
+              },
+            },
+            {
+              text: "OK",
+              style: "cancel",
+            },
+          ]
+        );
+      } catch (clipboardError) {
+        console.error("Failed to copy to clipboard:", clipboardError);
+        // If clipboard fails, show the link and offer to share
+        Alert.alert(
+          "Payment Link",
+          `Link: ${link}\n\nTap Share to share this link.`,
+          [
+            {
+              text: "Share",
+              onPress: async () => {
+                try {
+                  const shareMessage = `Payment Link\n\n${link}\n\nUse this link in the app to send money.`;
+                  await Share.share({
+                    message: shareMessage,
+                  });
+                } catch (shareError) {
+                  console.error("Failed to share:", shareError);
+                  Alert.alert(
+                    "Error",
+                    "Unable to share. Please copy the link manually:\n\n" + link
+                  );
+                }
+              },
+            },
+            {
+              text: "Open Link",
+              onPress: () => {
+                if (_id) {
+                  router.push(
+                    `/deposit-link?userId=${encodeURIComponent(
+                      String(_id)
+                    )}&amount=${encodeURIComponent(amount || "0")}`
+                  );
+                }
+              },
+            },
+            { text: "OK", style: "cancel" },
+          ]
+        );
+      }
     }
   };
 
@@ -154,7 +317,8 @@ export default function GenerateLinkPage() {
                   <View style={styles.infoCard}>
                     <Text style={styles.infoTitle}>Create a Payment Link</Text>
                     <Text style={styles.infoText}>
-                      Enter an amount (optional) to generate a payment link. You can share this link with others to receive payments.
+                      Enter an amount (optional) to generate a payment link. You
+                      can share this link with others to receive payments.
                     </Text>
                   </View>
 
@@ -168,9 +332,13 @@ export default function GenerateLinkPage() {
                       placeholder="Enter amount (optional)"
                       placeholderTextColor="#9CA3AF"
                       value={values.amount}
-                      onChangeText={(text) => handleAmountChange(text, setFieldValue)}
+                      onChangeText={(text) =>
+                        handleAmountChange(text, setFieldValue)
+                      }
                       onBlur={handleBlur("amount")}
-                      keyboardType={Platform.OS === "web" ? "default" : "decimal-pad"}
+                      keyboardType={
+                        Platform.OS === "web" ? "default" : "decimal-pad"
+                      }
                       inputMode={Platform.OS === "web" ? "decimal" : undefined}
                       returnKeyType="done"
                       blurOnSubmit={true}
@@ -186,12 +354,55 @@ export default function GenerateLinkPage() {
                 </View>
 
                 <View style={styles.bottomSection}>
+                  {profileError && (
+                    <View style={styles.errorContainer}>
+                      <Text style={styles.profileErrorText}>
+                        Failed to load profile. Please try again.
+                      </Text>
+                      <TouchableOpacity
+                        style={styles.retryButton}
+                        onPress={async () => {
+                          // Refetch profile
+                          await queryClient.invalidateQueries({
+                            queryKey: ["myProfile"],
+                          });
+                        }}
+                      >
+                        <Text style={styles.retryButtonText}>Retry</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
                   <TouchableOpacity
-                    style={styles.generateButton}
-                    onPress={() => handleSubmit()}
+                    style={[
+                      styles.generateButton,
+                      !_id && styles.generateButtonDisabled,
+                    ]}
+                    onPress={() => {
+                      console.log(
+                        "Button pressed - _id:",
+                        _id,
+                        "userId from context:",
+                        userId
+                      );
+                      handleSubmit();
+                    }}
+                    disabled={!_id}
                   >
-                    <Text style={styles.generateButtonText}>Generate & Copy Link</Text>
+                    {!_id ? (
+                      <Text style={styles.generateButtonText}>
+                        Loading user info...
+                      </Text>
+                    ) : (
+                      <Text style={styles.generateButtonText}>
+                        Generate & Copy Link
+                      </Text>
+                    )}
                   </TouchableOpacity>
+                  {!_id && !profileError && (
+                    <Text style={styles.hintText}>
+                      Waiting for user information...
+                    </Text>
+                  )}
                 </View>
               </>
             )}
@@ -313,10 +524,38 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
   },
+  generateButtonDisabled: {
+    opacity: 0.6,
+  },
+  errorContainer: {
+    backgroundColor: "#FEE2E2",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#FCA5A5",
+  },
+  profileErrorText: {
+    color: "#DC2626",
+    fontSize: 14,
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  retryButton: {
+    backgroundColor: "#DC2626",
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    alignSelf: "center",
+  },
+  retryButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "600",
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
 });
-
