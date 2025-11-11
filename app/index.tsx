@@ -50,7 +50,8 @@ const formatAmount = (amount: number, decimals: number = 3): string => {
 type TransactionFilter = "deposit" | "withdraw" | "transfer" | null;
 
 export default function HomePage() {
-  const { username, logout, isAuthenticated, isLoading, userId, setUserId } = useAuth();
+  const { username, logout, isAuthenticated, isLoading, userId, setUserId } =
+    useAuth();
   const [selectedFilter, setSelectedFilter] = useState<TransactionFilter>(null);
   const [imageError, setImageError] = useState(false);
 
@@ -84,60 +85,68 @@ export default function HomePage() {
   // User IDs can be alphanumeric strings (letters and numbers)
   const missingUserIds = useMemo(() => {
     if (!transactions || !allUsers) return [];
-    
+
     // MongoDB uses _id, but some APIs might use id
     const allUserIds = new Set(
-      allUsers.map(u => (u._id ?? u.id)?.toString()).filter(Boolean)
+      allUsers.map((u) => (u._id ?? u.id)?.toString()).filter(Boolean)
     );
-    const allUsernames = new Set(allUsers.map(u => u.username));
+    const allUsernames = new Set(allUsers.map((u) => u.username));
     const missingIds: (string | number)[] = [];
-    
+
     transactions.forEach((transaction) => {
       // Check 'from' field
       if (transaction.from) {
         const fromValue = transaction.from.toString();
-        
+
         // Skip if it's already a username (exists in usernames)
         if (allUsernames.has(fromValue)) {
           // Already have this username, skip
         } else {
           // Check if it's already in allUserIds (by string comparison)
           const isInAllUserIds = allUserIds.has(fromValue);
-          
+
           // If not in allUserIds and not already in missingIds, add it
           // This handles both numeric IDs and alphanumeric string IDs
-          if (!isInAllUserIds && !missingIds.includes(fromValue) && !missingIds.includes(transaction.from)) {
+          if (
+            !isInAllUserIds &&
+            !missingIds.includes(fromValue) &&
+            !missingIds.includes(transaction.from)
+          ) {
             // Use the original value (could be string or number)
             missingIds.push(transaction.from);
           }
         }
       }
-      
+
       // Check 'to' field
       if (transaction.to) {
         const toValue = transaction.to.toString();
-        
+
         // Skip if it's already a username (exists in usernames)
         if (allUsernames.has(toValue)) {
           // Already have this username, skip
         } else {
           // Check if it's already in allUserIds (by string comparison)
           const isInAllUserIds = allUserIds.has(toValue);
-          
+
           // If not in allUserIds and not already in missingIds, add it
           // This handles both numeric IDs and alphanumeric string IDs
-          if (!isInAllUserIds && !missingIds.includes(toValue) && !missingIds.includes(transaction.to)) {
+          if (
+            !isInAllUserIds &&
+            !missingIds.includes(toValue) &&
+            !missingIds.includes(transaction.to)
+          ) {
             // Use the original value (could be string or number)
             missingIds.push(transaction.to);
           }
         }
       }
     });
-    
+
     if (missingIds.length > 0) {
       console.log("Missing user IDs found in transactions:", missingIds);
     }
-    
+
     return missingIds;
   }, [transactions, allUsers]);
 
@@ -148,35 +157,43 @@ export default function HomePage() {
     queryFn: async () => {
       const users: User[] = [];
       const errors: { userId: string | number; error: any }[] = [];
-      
+
       for (const userId of missingUserIds) {
         try {
           const user = await getUserById(userId);
           if (user && user.username) {
             users.push(user);
-            console.log(`Successfully fetched user ${userId}: ${user.username}`);
+            console.log(
+              `Successfully fetched user ${userId}: ${user.username}`
+            );
           }
         } catch (error: any) {
           // Log error but don't fail the entire query
-          const errorMessage = error?.response?.data?.message || error?.message || 'Unknown error';
+          const errorMessage =
+            error?.response?.data?.message || error?.message || "Unknown error";
           const status = error?.response?.status;
           errors.push({ userId, error });
-          
+
           // Only log as warning if it's not a 500 error (which might be expected for invalid IDs)
           if (status === 500) {
-            console.warn(`Server error fetching user ${userId} (500): The user may not exist or the API endpoint may have issues`);
+            console.warn(
+              `Server error fetching user ${userId} (500): The user may not exist or the API endpoint may have issues`
+            );
           } else if (status === 404) {
             console.warn(`User ${userId} not found (404)`);
           } else {
-            console.warn(`Failed to fetch user ${userId} (${status}):`, errorMessage);
+            console.warn(
+              `Failed to fetch user ${userId} (${status}):`,
+              errorMessage
+            );
           }
         }
       }
-      
+
       if (errors.length > 0 && users.length === 0) {
         console.warn(`Failed to fetch all missing users. Errors:`, errors);
       }
-      
+
       return users;
     },
     enabled: isAuthenticated && missingUserIds.length > 0,
@@ -223,16 +240,20 @@ export default function HomePage() {
       console.log("HomePage - Profile id:", profile.id);
       console.log("HomePage - Current userId from context:", userId);
       console.log("HomePage - Profile userId:", profileUserId);
-      
+
       // Only update if we don't have a userId or if the profile has a different/valid userId
       if (profileUserId !== undefined && profileUserId !== null && setUserId) {
         if (userId === null || userId === undefined) {
-          console.log("HomePage - Setting userId from profile (was null/undefined)");
+          console.log(
+            "HomePage - Setting userId from profile (was null/undefined)"
+          );
           setUserId(profileUserId).catch((error) => {
             console.error("HomePage - Error storing user ID:", error);
           });
         } else if (String(userId) !== String(profileUserId)) {
-          console.log("HomePage - Updating userId from profile (different value)");
+          console.log(
+            "HomePage - Updating userId from profile (different value)"
+          );
           setUserId(profileUserId).catch((error) => {
             console.error("HomePage - Error updating user ID:", error);
           });
@@ -275,15 +296,16 @@ export default function HomePage() {
         value: string | number | undefined
       ): string | undefined => {
         if (!value) return undefined;
-        
+
         const valueStr = value.toString();
-        
+
         // First, try to find it directly in the map (handles both string and number keys)
-        const directMatch = userIdToUsernameMap.get(value) || userIdToUsernameMap.get(valueStr);
+        const directMatch =
+          userIdToUsernameMap.get(value) || userIdToUsernameMap.get(valueStr);
         if (directMatch) {
           return directMatch;
         }
-        
+
         // If not found, check if the value itself is a username (exists in map values)
         // Username comparison should be case-insensitive
         for (const [id, username] of userIdToUsernameMap.entries()) {
@@ -291,7 +313,7 @@ export default function HomePage() {
             return username; // Return the actual username from map to preserve casing
           }
         }
-        
+
         // If it's a string and not found in the map, it might be:
         // 1. An alphanumeric ID that we haven't fetched yet
         // 2. Already a username
@@ -302,7 +324,7 @@ export default function HomePage() {
 
       const fromUsername = getUsername(transaction.from);
       const toUsername = getUsername(transaction.to);
-      
+
       // Log username resolution for debugging
       if (transaction.from && !fromUsername) {
         console.log(`Could not resolve username for from: ${transaction.from}`);
@@ -322,11 +344,17 @@ export default function HomePage() {
       } else if (transaction.type === "transfer") {
         // If I'm receiving money (from is someone else)
         // Username comparison should be case-insensitive
-        if (fromUsername && fromUsername.toLowerCase() !== username?.toLowerCase()) {
+        if (
+          fromUsername &&
+          fromUsername.toLowerCase() !== username?.toLowerCase()
+        ) {
           isIncome = true;
         }
         // If I'm sending money (to is someone else)
-        if (toUsername && toUsername.toLowerCase() !== username?.toLowerCase()) {
+        if (
+          toUsername &&
+          toUsername.toLowerCase() !== username?.toLowerCase()
+        ) {
           isExpense = true;
         }
       }
@@ -339,9 +367,15 @@ export default function HomePage() {
       } else if (transaction.type === "transfer") {
         // If from exists and is not me, I received money
         // Username comparison should be case-insensitive
-        if (fromUsername && fromUsername.toLowerCase() !== username?.toLowerCase()) {
+        if (
+          fromUsername &&
+          fromUsername.toLowerCase() !== username?.toLowerCase()
+        ) {
           title = `Transfer from ${fromUsername}`;
-        } else if (toUsername && toUsername.toLowerCase() !== username?.toLowerCase()) {
+        } else if (
+          toUsername &&
+          toUsername.toLowerCase() !== username?.toLowerCase()
+        ) {
           title = `Transfer to ${toUsername}`;
         } else {
           title = "Transfer";
@@ -399,11 +433,19 @@ export default function HomePage() {
     return (
       <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
         <StatusBar style="dark" />
-        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          style={styles.scrollView}
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.header}>
             <View>
               <Skeleton width={120} height={16} borderRadius={4} />
-              <Skeleton width={150} height={24} borderRadius={4} style={{ marginTop: 8 }} />
+              <Skeleton
+                width={150}
+                height={24}
+                borderRadius={4}
+                style={{ marginTop: 8 }}
+              />
             </View>
             <View style={styles.headerButtons}>
               <SkeletonCircle size={44} />
@@ -416,13 +458,23 @@ export default function HomePage() {
               <SkeletonCircle size={60} />
               <View style={{ flex: 1, marginLeft: 16 }}>
                 <Skeleton width={100} height={14} borderRadius={4} />
-                <Skeleton width={200} height={36} borderRadius={4} style={{ marginTop: 4 }} />
+                <Skeleton
+                  width={200}
+                  height={36}
+                  borderRadius={4}
+                  style={{ marginTop: 4 }}
+                />
               </View>
             </View>
             <View style={styles.accountInfo}>
               <View style={styles.accountItem}>
                 <Skeleton width={120} height={12} borderRadius={4} />
-                <Skeleton width={150} height={16} borderRadius={4} style={{ marginTop: 4 }} />
+                <Skeleton
+                  width={150}
+                  height={16}
+                  borderRadius={4}
+                  style={{ marginTop: 4 }}
+                />
               </View>
             </View>
           </View>
@@ -432,7 +484,12 @@ export default function HomePage() {
               {[1, 2, 3, 4].map((i) => (
                 <View key={i} style={styles.quickActionButton}>
                   <SkeletonCircle size={56} />
-                  <Skeleton width={60} height={12} borderRadius={4} style={{ marginTop: 8 }} />
+                  <Skeleton
+                    width={60}
+                    height={12}
+                    borderRadius={4}
+                    style={{ marginTop: 8 }}
+                  />
                 </View>
               ))}
             </View>
@@ -452,7 +509,12 @@ export default function HomePage() {
                 <SkeletonCircle size={48} />
                 <View style={{ flex: 1, marginLeft: 12 }}>
                   <Skeleton width="60%" height={16} borderRadius={4} />
-                  <Skeleton width="40%" height={14} borderRadius={4} style={{ marginTop: 4 }} />
+                  <Skeleton
+                    width="40%"
+                    height={14}
+                    borderRadius={4}
+                    style={{ marginTop: 4 }}
+                  />
                 </View>
                 <Skeleton width={80} height={16} borderRadius={4} />
               </View>
@@ -479,10 +541,34 @@ export default function HomePage() {
     profile?.balance !== undefined ? formatAmount(profile.balance) : "0.000";
 
   const quickActions = [
-    { id: 1, label: "Send", icon: "→", route: "/transfer" },
-    { id: 2, label: "Receive", icon: "←", route: "/generate-link" },
-    { id: 3, label: "Deposit to Account", icon: "➕", route: "/deposit" },
-    { id: 4, label: "Withdraw from Account", icon: "➖", route: "/withdraw" },
+    {
+      id: 1,
+      label: "Send",
+      icon: require("../assets/Send.png"),
+      route: "/transfer",
+      isImage: true,
+    },
+    {
+      id: 2,
+      label: "Receive",
+      icon: require("../assets/Receive.png"),
+      route: "/generate-link",
+      isImage: true,
+    },
+    {
+      id: 3,
+      label: "Deposit to Account",
+      icon: require("../assets/Deposit.png"),
+      route: "/deposit",
+      isImage: true,
+    },
+    {
+      id: 4,
+      label: "Withdraw from Account",
+      icon: require("../assets/Withdraw.png"),
+      route: "/withdraw",
+      isImage: true,
+    },
   ];
 
   const handleLogout = () => {
@@ -520,7 +606,6 @@ export default function HomePage() {
       ]);
     }
   };
-
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
@@ -564,7 +649,9 @@ export default function HomePage() {
                       if (typeof imageValue === "string") {
                         return imageValue.startsWith("http")
                           ? imageValue
-                          : `${BASE_URL}${imageValue.startsWith("/") ? "" : "/"}${imageValue}`;
+                          : `${BASE_URL}${
+                              imageValue.startsWith("/") ? "" : "/"
+                            }${imageValue}`;
                       } else if (imageValue && typeof imageValue === "object") {
                         const imageObj = imageValue as any;
                         return imageObj.uri || String(imageObj) || "";
@@ -578,7 +665,9 @@ export default function HomePage() {
               ) : (
                 <View style={styles.profileImagePlaceholder}>
                   <Text style={styles.profileImagePlaceholderText}>
-                    {profile?.username?.charAt(0).toUpperCase() || username?.charAt(0).toUpperCase() || "U"}
+                    {profile?.username?.charAt(0).toUpperCase() ||
+                      username?.charAt(0).toUpperCase() ||
+                      "U"}
                   </Text>
                 </View>
               )}
@@ -596,16 +685,21 @@ export default function HomePage() {
             <View style={styles.accountItem}>
               <Text style={styles.accountLabel}>Account Number</Text>
               {profileLoading ? (
-                <Skeleton width={150} height={16} borderRadius={4} style={{ marginTop: 4 }} />
+                <Skeleton
+                  width={150}
+                  height={16}
+                  borderRadius={4}
+                  style={{ marginTop: 4 }}
+                />
               ) : (
                 <Text style={styles.accountValue}>
                   {profile?._id !== undefined && profile._id !== null
                     ? String(profile._id)
                     : profile?.id !== undefined && profile.id !== null
-                      ? String(profile.id)
-                      : userId !== null && userId !== undefined
-                        ? String(userId)
-                        : "N/A"}
+                    ? String(profile.id)
+                    : userId !== null && userId !== undefined
+                    ? String(userId)
+                    : "N/A"}
                 </Text>
               )}
             </View>
@@ -626,7 +720,17 @@ export default function HomePage() {
                 }}
               >
                 <View style={styles.quickActionIcon}>
-                  <Text style={styles.quickActionIconText}>{action.icon}</Text>
+                  {action.isImage ? (
+                    <Image
+                      source={action.icon}
+                      style={styles.quickActionImage}
+                      resizeMode="contain"
+                    />
+                  ) : (
+                    <Text style={styles.quickActionIconText}>
+                      {action.icon}
+                    </Text>
+                  )}
                 </View>
                 <Text style={styles.quickActionLabel}>{action.label}</Text>
               </TouchableOpacity>
@@ -686,7 +790,8 @@ export default function HomePage() {
               <Text
                 style={[
                   styles.filterButtonText,
-                  selectedFilter === "withdraw" && styles.filterButtonTextActive,
+                  selectedFilter === "withdraw" &&
+                    styles.filterButtonTextActive,
                 ]}
               >
                 Withdraw
@@ -702,7 +807,8 @@ export default function HomePage() {
               <Text
                 style={[
                   styles.filterButtonText,
-                  selectedFilter === "transfer" && styles.filterButtonTextActive,
+                  selectedFilter === "transfer" &&
+                    styles.filterButtonTextActive,
                 ]}
               >
                 Transfer
@@ -717,7 +823,12 @@ export default function HomePage() {
                   <SkeletonCircle size={48} />
                   <View style={{ flex: 1, marginLeft: 12 }}>
                     <Skeleton width="60%" height={16} borderRadius={4} />
-                    <Skeleton width="40%" height={14} borderRadius={4} style={{ marginTop: 4 }} />
+                    <Skeleton
+                      width="40%"
+                      height={14}
+                      borderRadius={4}
+                      style={{ marginTop: 4 }}
+                    />
                   </View>
                   <Skeleton width={80} height={16} borderRadius={4} />
                 </View>
@@ -972,6 +1083,10 @@ const styles = StyleSheet.create({
   },
   quickActionIconText: {
     fontSize: 24,
+  },
+  quickActionImage: {
+    width: 75,
+    height: 75,
   },
   quickActionLabel: {
     fontSize: 12,
