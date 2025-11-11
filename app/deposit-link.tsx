@@ -40,10 +40,18 @@ export default function DepositLinkPage() {
     userId: string | string[];
     amount: string | string[];
   }>();
-  const userId = Array.isArray(params.userId) ? params.userId[0] : params.userId;
-  const amountParam = Array.isArray(params.amount) ? params.amount[0] : params.amount;
-  
-  const { userId: currentUserId, isAuthenticated, username: currentUsername } = useAuth();
+  const userId = Array.isArray(params.userId)
+    ? params.userId[0]
+    : params.userId;
+  const amountParam = Array.isArray(params.amount)
+    ? params.amount[0]
+    : params.amount;
+
+  const {
+    userId: currentUserId,
+    isAuthenticated,
+    username: currentUsername,
+  } = useAuth();
   const queryClient = useQueryClient();
 
   // Check if current user is the owner
@@ -73,7 +81,9 @@ export default function DepositLinkPage() {
     onSuccess: (data, variables) => {
       Alert.alert(
         "Success",
-        `Transfer of ${variables.amount.toFixed(3)} KWD to ${ownerUser?.username || "user"} was successful!`,
+        `Transfer of ${variables.amount.toFixed(3)} KWD to ${
+          ownerUser?.username || "user"
+        } was successful!`,
         [
           {
             text: "OK",
@@ -96,11 +106,13 @@ export default function DepositLinkPage() {
         } else if (status === 401) {
           errorMessage = "Unauthorized. Please log in again.";
         } else if (status === 400) {
-          errorMessage = errorData?.message || "Invalid request. Please check the amount.";
+          errorMessage =
+            errorData?.message || "Invalid request. Please check the amount.";
         } else if (status >= 500) {
           errorMessage = "Server error. Please try again later.";
         } else {
-          errorMessage = errorData?.message || error.response.statusText || errorMessage;
+          errorMessage =
+            errorData?.message || error.response.statusText || errorMessage;
         }
       } else if (error.request) {
         errorMessage = "Network error. Please check your connection.";
@@ -129,7 +141,9 @@ export default function DepositLinkPage() {
 
     Alert.alert(
       "Confirm Transfer",
-      `Are you sure you want to transfer ${transferAmount.toFixed(3)} KWD to ${ownerUser.username}?`,
+      `Are you sure you want to transfer ${transferAmount.toFixed(3)} KWD to ${
+        ownerUser.username
+      }?`,
       [
         {
           text: "Cancel",
@@ -149,7 +163,9 @@ export default function DepositLinkPage() {
   };
 
   const copyLink = (amount: string) => {
-    const link = `${Platform.OS === "web" ? window.location.origin : ""}/deposit-link?userId=${userId}&amount=${amount}`;
+    const link = `${
+      Platform.OS === "web" ? window.location.origin : ""
+    }/deposit-link?userId=${userId}&amount=${amount}`;
     if (Platform.OS === "web") {
       navigator.clipboard.writeText(link).then(() => {
         window.alert("Link copied to clipboard!");
@@ -167,7 +183,7 @@ export default function DepositLinkPage() {
   ) => {
     // Remove any non-numeric characters except decimal point
     const cleaned = text.replace(/[^0-9.]/g, "");
-    
+
     // Ensure only one decimal point
     const parts = cleaned.split(".");
     if (parts.length > 2) {
@@ -182,7 +198,7 @@ export default function DepositLinkPage() {
     return (
       <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#1E40AF" />
+          <ActivityIndicator size="large" color="#4939b0" />
         </View>
       </SafeAreaView>
     );
@@ -193,7 +209,7 @@ export default function DepositLinkPage() {
       <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
         <StatusBar style="dark" />
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#1E40AF" />
+          <ActivityIndicator size="large" color="#4939b0" />
           <Text style={styles.loadingText}>Loading deposit link...</Text>
         </View>
       </SafeAreaView>
@@ -259,7 +275,8 @@ export default function DepositLinkPage() {
                   <View style={styles.infoCard}>
                     <Text style={styles.infoTitle}>Your Deposit Link</Text>
                     <Text style={styles.infoDescription}>
-                      Edit the amount below and share this link with others to receive deposits.
+                      Edit the amount below and share this link with others to
+                      receive deposits.
                     </Text>
                   </View>
 
@@ -273,7 +290,9 @@ export default function DepositLinkPage() {
                       placeholder="Enter amount"
                       placeholderTextColor="#9CA3AF"
                       value={values.amount}
-                      onChangeText={(text) => handleAmountChange(text, setFieldValue)}
+                      onChangeText={(text) =>
+                        handleAmountChange(text, setFieldValue)
+                      }
                       onBlur={handleBlur("amount")}
                       keyboardType="decimal-pad"
                       returnKeyType="done"
@@ -297,7 +316,8 @@ export default function DepositLinkPage() {
                   <View style={styles.infoCard}>
                     <Text style={styles.infoTitle}>Deposit Request</Text>
                     <Text style={styles.infoDescription}>
-                      {ownerUser.username} is requesting a deposit of {amountParam || "0"} KWD
+                      {ownerUser.username} is requesting a deposit of{" "}
+                      {amountParam || "0"} KWD
                     </Text>
                   </View>
 
@@ -323,7 +343,9 @@ export default function DepositLinkPage() {
                       placeholder="Enter amount"
                       placeholderTextColor="#9CA3AF"
                       value={values.amount}
-                      onChangeText={(text) => handleAmountChange(text, setFieldValue)}
+                      onChangeText={(text) =>
+                        handleAmountChange(text, setFieldValue)
+                      }
                       onBlur={handleBlur("amount")}
                       keyboardType="decimal-pad"
                       returnKeyType="done"
@@ -341,7 +363,8 @@ export default function DepositLinkPage() {
                   <TouchableOpacity
                     style={[
                       styles.transferButton,
-                      (!values.amount || transferMutation.isPending) && styles.transferButtonDisabled,
+                      (!values.amount || transferMutation.isPending) &&
+                        styles.transferButtonDisabled,
                     ]}
                     onPress={() => handleSubmit()}
                     disabled={!values.amount || transferMutation.isPending}
@@ -349,7 +372,9 @@ export default function DepositLinkPage() {
                     {transferMutation.isPending ? (
                       <ActivityIndicator color="#FFFFFF" />
                     ) : (
-                      <Text style={styles.transferButtonText}>Transfer Money</Text>
+                      <Text style={styles.transferButtonText}>
+                        Transfer Money
+                      </Text>
                     )}
                   </TouchableOpacity>
                 </>
@@ -470,17 +495,17 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 24,
     borderWidth: 2,
-    borderColor: "#1E40AF",
+    borderColor: "#4939b0",
   },
   amountLabel: {
     fontSize: 12,
-    color: "#1E40AF",
+    color: "#4939b0",
     fontWeight: "500",
     marginBottom: 4,
   },
   amountValue: {
     fontSize: 28,
-    color: "#1E40AF",
+    color: "#4939b0",
     fontWeight: "700",
   },
   inputContainer: {
@@ -516,7 +541,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   copyButton: {
-    backgroundColor: "#1E40AF",
+    backgroundColor: "#4939b0",
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: "center",
@@ -530,7 +555,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   transferButton: {
-    backgroundColor: "#1E40AF",
+    backgroundColor: "#4939b0",
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: "center",
@@ -548,10 +573,9 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   backButtonText: {
-    color: "#1E40AF",
+    color: "#4939b0",
     fontSize: 16,
     fontWeight: "600",
     textAlign: "center",
   },
 });
-

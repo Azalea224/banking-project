@@ -13,7 +13,12 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getMyProfile, UserProfile, updateProfile, UpdateProfileRequest } from "../api/auth";
+import {
+  getMyProfile,
+  UserProfile,
+  updateProfile,
+  UpdateProfileRequest,
+} from "../api/auth";
 import { useAuth } from "../contexts/AuthContext";
 import { router } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
@@ -47,7 +52,12 @@ const formatAmount = (amount: number, decimals: number = 3): string => {
 };
 
 export default function ProfilePage() {
-  const { isAuthenticated, isLoading: authLoading, setUserId, userId } = useAuth();
+  const {
+    isAuthenticated,
+    isLoading: authLoading,
+    setUserId,
+    userId,
+  } = useAuth();
   const [imageError, setImageError] = useState(false);
   const queryClient = useQueryClient();
 
@@ -124,7 +134,7 @@ export default function ProfilePage() {
       input.type = "file";
       input.accept = "image/*";
       input.style.display = "none";
-      
+
       input.onchange = async (e: Event) => {
         const target = e.target as HTMLInputElement;
         const file = target.files?.[0];
@@ -133,7 +143,7 @@ export default function ProfilePage() {
           const reader = new FileReader();
           reader.onloadend = () => {
             const base64String = reader.result as string;
-            
+
             const imageData = {
               uri: base64String, // Use base64 data URL for web
               type: file.type || "image/jpeg",
@@ -170,7 +180,7 @@ export default function ProfilePage() {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions?.Images || 'images',
+      mediaTypes: ImagePicker.MediaTypeOptions?.Images || "images",
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.8,
@@ -204,13 +214,48 @@ export default function ProfilePage() {
           </View>
           <View style={styles.profileSection}>
             <SkeletonCircle size={120} />
-            <Skeleton width={150} height={28} borderRadius={4} style={{ marginTop: 16 }} />
-            <Skeleton width={200} height={20} borderRadius={4} style={{ marginTop: 8 }} />
-            <Skeleton width={120} height={12} borderRadius={4} style={{ marginTop: 24, alignSelf: "center" }} />
-            <Skeleton width={180} height={16} borderRadius={4} style={{ marginTop: 4, alignSelf: "center" }} />
-            <Skeleton width={100} height={12} borderRadius={4} style={{ marginTop: 12, alignSelf: "center" }} />
-            <Skeleton width={150} height={16} borderRadius={4} style={{ marginTop: 4, alignSelf: "center" }} />
-            <Skeleton width={250} height={12} borderRadius={4} style={{ marginTop: 8 }} />
+            <Skeleton
+              width={150}
+              height={28}
+              borderRadius={4}
+              style={{ marginTop: 16 }}
+            />
+            <Skeleton
+              width={200}
+              height={20}
+              borderRadius={4}
+              style={{ marginTop: 8 }}
+            />
+            <Skeleton
+              width={120}
+              height={12}
+              borderRadius={4}
+              style={{ marginTop: 24, alignSelf: "center" }}
+            />
+            <Skeleton
+              width={180}
+              height={16}
+              borderRadius={4}
+              style={{ marginTop: 4, alignSelf: "center" }}
+            />
+            <Skeleton
+              width={100}
+              height={12}
+              borderRadius={4}
+              style={{ marginTop: 12, alignSelf: "center" }}
+            />
+            <Skeleton
+              width={150}
+              height={16}
+              borderRadius={4}
+              style={{ marginTop: 4, alignSelf: "center" }}
+            />
+            <Skeleton
+              width={250}
+              height={12}
+              borderRadius={4}
+              style={{ marginTop: 8 }}
+            />
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -221,7 +266,7 @@ export default function ProfilePage() {
     return (
       <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#1E40AF" />
+          <ActivityIndicator size="large" color="#4939b0" />
         </View>
       </SafeAreaView>
     );
@@ -277,7 +322,7 @@ export default function ProfilePage() {
           >
             {updateProfileMutation.isPending ? (
               <View style={styles.profileImage}>
-                <ActivityIndicator size="large" color="#1E40AF" />
+                <ActivityIndicator size="large" color="#4939b0" />
               </View>
             ) : profile?.image && !imageError ? (
               <Image
@@ -288,9 +333,9 @@ export default function ProfilePage() {
                     if (typeof imageValue === "string") {
                       return imageValue.startsWith("http")
                         ? imageValue
-                        : `${BASE_URL}${imageValue.startsWith("/") ? "" : "/"}${
-                            imageValue
-                          }`;
+                        : `${BASE_URL}${
+                            imageValue.startsWith("/") ? "" : "/"
+                          }${imageValue}`;
                     } else if (imageValue && typeof imageValue === "object") {
                       // If image is an object, try to get uri or stringify it
                       const imageObj = imageValue as any;
@@ -330,16 +375,18 @@ export default function ProfilePage() {
                 {profile?._id !== undefined && profile._id !== null
                   ? String(profile._id)
                   : profile?.id !== undefined && profile.id !== null
-                    ? String(profile.id)
-                    : userId !== null && userId !== undefined
-                      ? String(userId)
-                      : "N/A"}
+                  ? String(profile.id)
+                  : userId !== null && userId !== undefined
+                  ? String(userId)
+                  : "N/A"}
               </Text>
             </View>
             {profile?.username && (
               <View style={styles.profileDetailItem}>
                 <Text style={styles.profileDetailLabel}>Username</Text>
-                <Text style={styles.profileDetailValue}>{profile.username}</Text>
+                <Text style={styles.profileDetailValue}>
+                  {profile.username}
+                </Text>
               </View>
             )}
           </View>
@@ -421,7 +468,7 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 60,
     borderWidth: 3,
-    borderColor: "#1E40AF",
+    borderColor: "#4939b0",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -432,7 +479,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "#1E40AF",
+    backgroundColor: "#4939b0",
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 3,
@@ -453,7 +500,7 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: "#1E40AF",
+    backgroundColor: "#4939b0",
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 16,
@@ -496,7 +543,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   retryButton: {
-    backgroundColor: "#1E40AF",
+    backgroundColor: "#4939b0",
     borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 24,
@@ -509,7 +556,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   backButtonText: {
-    color: "#1E40AF",
+    color: "#4939b0",
     fontSize: 16,
     fontWeight: "600",
     textAlign: "center",

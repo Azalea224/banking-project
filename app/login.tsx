@@ -52,11 +52,11 @@ export default function LoginPage() {
           // MongoDB uses _id, but some APIs might use id
           // If userId is not in response, decode JWT token to get _id
           let userId = data._id ?? data.id;
-          
+
           // If userId is not in response, decode JWT token to get _id
           if (!userId && data.token) {
             try {
-              const tokenParts = data.token.split('.');
+              const tokenParts = data.token.split(".");
               if (tokenParts.length === 3) {
                 const payload = JSON.parse(atob(tokenParts[1]));
                 userId = payload._id ?? payload.id;
@@ -66,7 +66,7 @@ export default function LoginPage() {
               console.error("Error decoding JWT token:", error);
             }
           }
-          
+
           console.log("Login response data:", data);
           console.log("Extracted userId:", userId);
           setAuth(data.token, userUsername, userId)
@@ -285,7 +285,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   button: {
-    backgroundColor: "#1E40AF",
+    backgroundColor: "#4939b0",
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: "center",
@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
   },
   linkText: {
     fontSize: 14,
-    color: "#1E40AF",
+    color: "#4939b0",
     fontWeight: "600",
   },
 });

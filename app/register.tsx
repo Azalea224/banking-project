@@ -51,7 +51,7 @@ export default function RegisterPage() {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions?.Images || 'images',
+      mediaTypes: ImagePicker.MediaTypeOptions?.Images || "images",
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.8,
@@ -99,11 +99,11 @@ export default function RegisterPage() {
           // MongoDB uses _id, but some APIs might use id
           // If userId is not in response, decode JWT token to get _id
           let userId = data._id ?? data.id;
-          
+
           // If userId is not in response, decode JWT token to get _id
           if (!userId && data.token) {
             try {
-              const tokenParts = data.token.split('.');
+              const tokenParts = data.token.split(".");
               if (tokenParts.length === 3) {
                 const payload = JSON.parse(atob(tokenParts[1]));
                 userId = payload._id ?? payload.id;
@@ -113,7 +113,7 @@ export default function RegisterPage() {
               console.error("Error decoding JWT token:", error);
             }
           }
-          
+
           console.log("Register response data:", data);
           console.log("Extracted userId:", userId);
           login(data.token, userUsername, userId)
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 60,
     borderWidth: 3,
-    borderColor: "#1E40AF",
+    borderColor: "#4939b0",
   },
   imagePlaceholder: {
     width: 120,
@@ -362,7 +362,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   button: {
-    backgroundColor: "#1E40AF",
+    backgroundColor: "#4939b0",
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: "center",
@@ -391,7 +391,7 @@ const styles = StyleSheet.create({
   },
   linkText: {
     fontSize: 14,
-    color: "#1E40AF",
+    color: "#4939b0",
     fontWeight: "600",
   },
 });

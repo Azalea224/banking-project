@@ -63,7 +63,12 @@ export default function UsersPage() {
                 <SkeletonCircle size={50} />
                 <View style={{ flex: 1, marginLeft: 12 }}>
                   <Skeleton width="60%" height={16} borderRadius={4} />
-                  <Skeleton width="40%" height={14} borderRadius={4} style={{ marginTop: 4 }} />
+                  <Skeleton
+                    width="40%"
+                    height={14}
+                    borderRadius={4}
+                    style={{ marginTop: 4 }}
+                  />
                 </View>
               </View>
             ))}
@@ -77,7 +82,7 @@ export default function UsersPage() {
     return (
       <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#1E40AF" />
+          <ActivityIndicator size="large" color="#4939b0" />
         </View>
       </SafeAreaView>
     );
@@ -145,9 +150,9 @@ export default function UsersPage() {
                     source={{
                       uri: user.image.startsWith("http")
                         ? user.image
-                        : `${BASE_URL}${
-                            user.image.startsWith("/") ? "" : "/"
-                          }${user.image}`,
+                        : `${BASE_URL}${user.image.startsWith("/") ? "" : "/"}${
+                            user.image
+                          }`,
                     }}
                     style={styles.userImage}
                   />
@@ -159,7 +164,9 @@ export default function UsersPage() {
                   </View>
                 )}
                 <View style={styles.userInfo}>
-                  <Text style={styles.userName}>{user.username || "Unknown"}</Text>
+                  <Text style={styles.userName}>
+                    {user.username || "Unknown"}
+                  </Text>
                   <Text style={styles.userId}>
                     ID: {userId !== undefined ? userId.toString() : "N/A"}
                   </Text>
@@ -253,7 +260,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: "#1E40AF",
+    backgroundColor: "#4939b0",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
@@ -286,7 +293,7 @@ const styles = StyleSheet.create({
     color: "#6B7280",
   },
   retryButton: {
-    backgroundColor: "#1E40AF",
+    backgroundColor: "#4939b0",
     borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 24,
@@ -302,10 +309,9 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   backButtonTextStyle: {
-    color: "#1E40AF",
+    color: "#4939b0",
     fontSize: 16,
     fontWeight: "600",
     textAlign: "center",
   },
 });
-

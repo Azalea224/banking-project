@@ -19,6 +19,7 @@ import { getMyTransactions, Transaction } from "../api/transactions";
 import { getAllUsers, User, getUserById } from "../api/auth";
 import { getMyProfile, UserProfile } from "../api/auth";
 import { Skeleton, SkeletonText, SkeletonCircle } from "../components/Skeleton";
+import { useGamification } from "../hooks/useGamification";
 
 const BASE_URL = "https://react-bank-project.eapi.joincoded.com";
 
@@ -80,6 +81,9 @@ export default function HomePage() {
     queryFn: getAllUsers,
     enabled: isAuthenticated,
   });
+
+  // Gamification stats (only for level button)
+  const gamification = useGamification(transactions, profile);
 
   // Extract unique user IDs from transactions that aren't in allUsers
   // User IDs can be alphanumeric strings (letters and numbers)
@@ -530,7 +534,7 @@ export default function HomePage() {
     return (
       <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#1E40AF" />
+          <ActivityIndicator size="large" color="#4939b0" />
         </View>
       </SafeAreaView>
     );
@@ -624,16 +628,27 @@ export default function HomePage() {
               style={styles.profileButton}
               onPress={() => router.push("/profile")}
             >
-              <Text style={styles.profileIcon}>👤</Text>
+              <Image
+                source={require("../assets/Profile.png")}
+                style={styles.profileIcon}
+                resizeMode="contain"
+              />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.notificationButton}>
-              <Text style={styles.notificationIcon}>🔔</Text>
+            <TouchableOpacity
+              style={styles.levelButton}
+              onPress={() => router.push("/achievements")}
+            >
+              <Text style={styles.levelButtonText}>L{gamification.level}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.logoutButton, { marginLeft: 12 }]}
               onPress={handleLogout}
             >
-              <Text style={styles.logoutIcon}>🚪</Text>
+              <Image
+                source={require("../assets/LogOut.png")}
+                style={styles.logoutIcon}
+                resizeMode="contain"
+              />
             </TouchableOpacity>
           </View>
         </View>
@@ -936,18 +951,20 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     marginTop: 4,
   },
-  notificationButton: {
+  levelButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#4939b0",
     justifyContent: "center",
     alignItems: "center",
-    boxShadow: "0px 2px 4px 0px rgba(0, 0, 0, 0.1)",
+    boxShadow: "0px 2px 4px 0px rgba(73, 57, 176, 0.3)",
     elevation: 3,
   },
-  notificationIcon: {
-    fontSize: 20,
+  levelButtonText: {
+    fontSize: 14,
+    color: "#FFFFFF",
+    fontWeight: "700",
   },
   profileButton: {
     width: 44,
@@ -961,7 +978,8 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   profileIcon: {
-    fontSize: 20,
+    width: 50,
+    height: 50,
   },
   logoutButton: {
     width: 44,
@@ -974,15 +992,16 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   logoutIcon: {
-    fontSize: 20,
+    width: 60,
+    height: 60,
   },
   balanceCard: {
-    backgroundColor: "#1E40AF",
+    backgroundColor: "#4939b0",
     marginHorizontal: 20,
     marginTop: 20,
     borderRadius: 20,
     padding: 24,
-    boxShadow: "0px 4px 8px 0px rgba(30, 64, 175, 0.3)",
+    boxShadow: "0px 4px 8px 0px rgba(121, 120, 236, 0.3)",
     elevation: 5,
   },
   balanceHeader: {
@@ -1012,7 +1031,7 @@ const styles = StyleSheet.create({
   },
   profileImagePlaceholderText: {
     fontSize: 24,
-    color: "#1E40AF",
+    color: "#4939b0",
     fontWeight: "700",
   },
   balanceHeaderText: {
@@ -1078,8 +1097,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 8,
-    boxShadow: "0px 2px 4px 0px rgba(0, 0, 0, 0.1)",
+    boxShadow: "0px 2px 4px 0px rgba(73, 57, 176, 0.2)",
     elevation: 3,
+    borderWidth: 2,
+    borderColor: "#F3F4F6",
   },
   quickActionIconText: {
     fontSize: 24,
@@ -1092,6 +1113,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#6B7280",
     fontWeight: "500",
+    textAlign: "center",
   },
   transactionsContainer: {
     marginTop: 8,
@@ -1118,8 +1140,8 @@ const styles = StyleSheet.create({
     borderColor: "#E5E7EB",
   },
   filterButtonActive: {
-    backgroundColor: "#1E40AF",
-    borderColor: "#1E40AF",
+    backgroundColor: "#4939b0",
+    borderColor: "#4939b0",
   },
   filterButtonText: {
     fontSize: 14,
@@ -1131,7 +1153,7 @@ const styles = StyleSheet.create({
   },
   seeAllText: {
     fontSize: 14,
-    color: "#1E40AF",
+    color: "#4939b0",
     fontWeight: "600",
   },
   transactionItem: {
@@ -1152,6 +1174,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
   },
   transactionIconText: {
     fontSize: 20,

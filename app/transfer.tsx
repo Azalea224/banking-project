@@ -172,7 +172,7 @@ export default function TransferPage() {
   ) => {
     // Remove any non-numeric characters except decimal point
     const cleaned = text.replace(/[^0-9.]/g, "");
-    
+
     // Ensure only one decimal point
     const parts = cleaned.split(".");
     if (parts.length > 2) {
@@ -223,7 +223,9 @@ export default function TransferPage() {
                   placeholder="Enter amount"
                   placeholderTextColor="#9CA3AF"
                   value={values.amount}
-                  onChangeText={(text) => handleAmountChange(text, setFieldValue)}
+                  onChangeText={(text) =>
+                    handleAmountChange(text, setFieldValue)
+                  }
                   onBlur={handleBlur("amount")}
                   keyboardType="decimal-pad"
                   returnKeyType="done"
@@ -251,101 +253,107 @@ export default function TransferPage() {
               </View>
             </View>
 
-      <View style={styles.usersSection}>
-        <Text style={styles.sectionTitle}>Select Recipient</Text>
-        {usersLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="small" color="#1E40AF" />
-            <Text style={styles.loadingText}>Loading users...</Text>
-          </View>
-        ) : usersError ? (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>Failed to load users</Text>
-          </View>
-        ) : filteredUsers.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>
-              {searchQuery ? "No users found" : "No users available"}
-            </Text>
-          </View>
-        ) : (
-          <FlatList
-            ref={flatListRef}
-            data={filteredUsers}
-            keyExtractor={(item, index) =>
-              item.id?.toString() || item.username || `user-${index}`
-            }
-            scrollEnabled={true}
-            style={styles.userList}
-            contentContainerStyle={styles.userListContent}
-            showsVerticalScrollIndicator={true}
-            renderItem={({ item }) => {
-              const isSelected =
-                selectedUser !== null &&
-                item.id !== undefined &&
-                item.username !== undefined &&
-                selectedUser.id === item.id;
-              return (
-                <TouchableOpacity
-                  style={[
-                    styles.userItem,
-                    isSelected && styles.userItemSelected,
-                  ]}
-                  onPress={() => setSelectedUser(item)}
-                >
-                  {item.image ? (
-                    <Image
-                      source={{
-                        uri: item.image.startsWith("http")
-                          ? item.image
-                          : `${BASE_URL}${
-                              item.image.startsWith("/") ? "" : "/"
-                            }${item.image}`,
-                      }}
-                      style={styles.userImage}
-                    />
-                  ) : (
-                    <View style={styles.userImagePlaceholder}>
-                      <Text style={styles.userImagePlaceholderText}>
-                        {item.username?.charAt(0).toUpperCase() || "U"}
-                      </Text>
-                    </View>
-                  )}
-                  <Text style={styles.userName}>
-                    {item.username || "Unknown User"}
+            <View style={styles.usersSection}>
+              <Text style={styles.sectionTitle}>Select Recipient</Text>
+              {usersLoading ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="small" color="#4939b0" />
+                  <Text style={styles.loadingText}>Loading users...</Text>
+                </View>
+              ) : usersError ? (
+                <View style={styles.errorContainer}>
+                  <Text style={styles.errorText}>Failed to load users</Text>
+                </View>
+              ) : filteredUsers.length === 0 ? (
+                <View style={styles.emptyContainer}>
+                  <Text style={styles.emptyText}>
+                    {searchQuery ? "No users found" : "No users available"}
                   </Text>
-                  {isSelected && <Text style={styles.checkmark}>✓</Text>}
-                </TouchableOpacity>
-              );
-            }}
-          />
-        )}
-      </View>
-
-      <View style={styles.bottomSection}>
-        {selectedUser && (
-          <View style={styles.selectedUserInfo}>
-            <Text style={styles.selectedUserLabel}>Sending to:</Text>
-            <Text style={styles.selectedUserName}>{selectedUser.username}</Text>
-          </View>
-        )}
-
-            <TouchableOpacity
-              style={[
-                styles.transferButton,
-                (!selectedUser || !values.amount || transferMutation.isPending) &&
-                  styles.transferButtonDisabled,
-              ]}
-              onPress={() => handleSubmit()}
-              disabled={!selectedUser || !values.amount || transferMutation.isPending}
-            >
-              {transferMutation.isPending ? (
-                <ActivityIndicator color="#FFFFFF" />
+                </View>
               ) : (
-                <Text style={styles.transferButtonText}>Send Money</Text>
+                <FlatList
+                  ref={flatListRef}
+                  data={filteredUsers}
+                  keyExtractor={(item, index) =>
+                    item.id?.toString() || item.username || `user-${index}`
+                  }
+                  scrollEnabled={true}
+                  style={styles.userList}
+                  contentContainerStyle={styles.userListContent}
+                  showsVerticalScrollIndicator={true}
+                  renderItem={({ item }) => {
+                    const isSelected =
+                      selectedUser !== null &&
+                      item.id !== undefined &&
+                      item.username !== undefined &&
+                      selectedUser.id === item.id;
+                    return (
+                      <TouchableOpacity
+                        style={[
+                          styles.userItem,
+                          isSelected && styles.userItemSelected,
+                        ]}
+                        onPress={() => setSelectedUser(item)}
+                      >
+                        {item.image ? (
+                          <Image
+                            source={{
+                              uri: item.image.startsWith("http")
+                                ? item.image
+                                : `${BASE_URL}${
+                                    item.image.startsWith("/") ? "" : "/"
+                                  }${item.image}`,
+                            }}
+                            style={styles.userImage}
+                          />
+                        ) : (
+                          <View style={styles.userImagePlaceholder}>
+                            <Text style={styles.userImagePlaceholderText}>
+                              {item.username?.charAt(0).toUpperCase() || "U"}
+                            </Text>
+                          </View>
+                        )}
+                        <Text style={styles.userName}>
+                          {item.username || "Unknown User"}
+                        </Text>
+                        {isSelected && <Text style={styles.checkmark}>✓</Text>}
+                      </TouchableOpacity>
+                    );
+                  }}
+                />
               )}
-            </TouchableOpacity>
-          </View>
+            </View>
+
+            <View style={styles.bottomSection}>
+              {selectedUser && (
+                <View style={styles.selectedUserInfo}>
+                  <Text style={styles.selectedUserLabel}>Sending to:</Text>
+                  <Text style={styles.selectedUserName}>
+                    {selectedUser.username}
+                  </Text>
+                </View>
+              )}
+
+              <TouchableOpacity
+                style={[
+                  styles.transferButton,
+                  (!selectedUser ||
+                    !values.amount ||
+                    transferMutation.isPending) &&
+                    styles.transferButtonDisabled,
+                ]}
+                onPress={() => handleSubmit()}
+                disabled={
+                  !selectedUser || !values.amount || transferMutation.isPending
+                }
+              >
+                {transferMutation.isPending ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.transferButtonText}>Send Money</Text>
+                )}
+              </TouchableOpacity>
+            </View>
           </>
         )}
       </Formik>
@@ -479,7 +487,7 @@ const styles = StyleSheet.create({
   },
   userItemSelected: {
     borderWidth: 2,
-    borderColor: "#1E40AF",
+    borderColor: "#4939b0",
     backgroundColor: "#EFF6FF",
     boxShadow: "0px 2px 4px 0px rgba(30, 64, 175, 0.2)",
     elevation: 3,
@@ -494,7 +502,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: "#1E40AF",
+    backgroundColor: "#4939b0",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
@@ -512,7 +520,7 @@ const styles = StyleSheet.create({
   },
   checkmark: {
     fontSize: 20,
-    color: "#1E40AF",
+    color: "#4939b0",
     fontWeight: "700",
     marginLeft: 8,
   },
@@ -534,11 +542,11 @@ const styles = StyleSheet.create({
   },
   selectedUserName: {
     fontSize: 18,
-    color: "#1E40AF",
+    color: "#4939b0",
     fontWeight: "700",
   },
   transferButton: {
-    backgroundColor: "#1E40AF",
+    backgroundColor: "#4939b0",
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: "center",
@@ -562,7 +570,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: "#1E40AF",
+    backgroundColor: "#4939b0",
     justifyContent: "center",
     alignItems: "center",
     boxShadow: "0px 4px 8px 0px rgba(0, 0, 0, 0.3)",

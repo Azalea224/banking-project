@@ -66,13 +66,13 @@ export default function TransactionsPage() {
   // Extract unique user IDs from transactions that aren't in allUsers
   const missingUserIds = useMemo(() => {
     if (!transactions || !allUsers) return [];
-    
+
     const allUserIds = new Set(
-      allUsers.map(u => (u._id ?? u.id)?.toString()).filter(Boolean)
+      allUsers.map((u) => (u._id ?? u.id)?.toString()).filter(Boolean)
     );
-    const allUsernames = new Set(allUsers.map(u => u.username));
+    const allUsernames = new Set(allUsers.map((u) => u.username));
     const missingIds: (string | number)[] = [];
-    
+
     transactions.forEach((transaction) => {
       if (transaction.from) {
         const fromValue = transaction.from.toString();
@@ -80,25 +80,33 @@ export default function TransactionsPage() {
           // Already have this username, skip
         } else {
           const isInAllUserIds = allUserIds.has(fromValue);
-          if (!isInAllUserIds && !missingIds.includes(fromValue) && !missingIds.includes(transaction.from)) {
+          if (
+            !isInAllUserIds &&
+            !missingIds.includes(fromValue) &&
+            !missingIds.includes(transaction.from)
+          ) {
             missingIds.push(transaction.from);
           }
         }
       }
-      
+
       if (transaction.to) {
         const toValue = transaction.to.toString();
         if (allUsernames.has(toValue)) {
           // Already have this username, skip
         } else {
           const isInAllUserIds = allUserIds.has(toValue);
-          if (!isInAllUserIds && !missingIds.includes(toValue) && !missingIds.includes(transaction.to)) {
+          if (
+            !isInAllUserIds &&
+            !missingIds.includes(toValue) &&
+            !missingIds.includes(transaction.to)
+          ) {
             missingIds.push(transaction.to);
           }
         }
       }
     });
-    
+
     return missingIds;
   }, [transactions, allUsers]);
 
@@ -108,7 +116,7 @@ export default function TransactionsPage() {
     queryFn: async () => {
       const users: User[] = [];
       const errors: { userId: string | number; error: any }[] = [];
-      
+
       for (const userId of missingUserIds) {
         try {
           const user = await getUserById(userId);
@@ -119,7 +127,7 @@ export default function TransactionsPage() {
           errors.push({ userId, error });
         }
       }
-      
+
       return users;
     },
     enabled: isAuthenticated && missingUserIds.length > 0,
@@ -158,19 +166,20 @@ export default function TransactionsPage() {
         value: string | number | undefined
       ): string | undefined => {
         if (!value) return undefined;
-        
+
         const valueStr = value.toString();
-        const directMatch = userIdToUsernameMap.get(value) || userIdToUsernameMap.get(valueStr);
+        const directMatch =
+          userIdToUsernameMap.get(value) || userIdToUsernameMap.get(valueStr);
         if (directMatch) {
           return directMatch;
         }
-        
+
         for (const [id, username] of userIdToUsernameMap.entries()) {
           if (username.toLowerCase() === valueStr.toLowerCase()) {
             return username;
           }
         }
-        
+
         return valueStr;
       };
 
@@ -186,10 +195,16 @@ export default function TransactionsPage() {
       } else if (transaction.type === "withdraw") {
         isExpense = true;
       } else if (transaction.type === "transfer") {
-        if (fromUsername && fromUsername.toLowerCase() !== username?.toLowerCase()) {
+        if (
+          fromUsername &&
+          fromUsername.toLowerCase() !== username?.toLowerCase()
+        ) {
           isIncome = true;
         }
-        if (toUsername && toUsername.toLowerCase() !== username?.toLowerCase()) {
+        if (
+          toUsername &&
+          toUsername.toLowerCase() !== username?.toLowerCase()
+        ) {
           isExpense = true;
         }
       }
@@ -200,9 +215,15 @@ export default function TransactionsPage() {
       } else if (transaction.type === "withdraw") {
         title = "Withdrawal";
       } else if (transaction.type === "transfer") {
-        if (fromUsername && fromUsername.toLowerCase() !== username?.toLowerCase()) {
+        if (
+          fromUsername &&
+          fromUsername.toLowerCase() !== username?.toLowerCase()
+        ) {
           title = `Transfer from ${fromUsername}`;
-        } else if (toUsername && toUsername.toLowerCase() !== username?.toLowerCase()) {
+        } else if (
+          toUsername &&
+          toUsername.toLowerCase() !== username?.toLowerCase()
+        ) {
           title = `Transfer to ${toUsername}`;
         } else {
           title = "Transfer";
@@ -260,7 +281,7 @@ export default function TransactionsPage() {
     return (
       <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#1E40AF" />
+          <ActivityIndicator size="large" color="#4939b0" />
         </View>
       </SafeAreaView>
     );
@@ -359,7 +380,12 @@ export default function TransactionsPage() {
                 <SkeletonCircle size={48} />
                 <View style={{ flex: 1, marginLeft: 12 }}>
                   <Skeleton width="60%" height={16} borderRadius={4} />
-                  <Skeleton width="40%" height={14} borderRadius={4} style={{ marginTop: 4 }} />
+                  <Skeleton
+                    width="40%"
+                    height={14}
+                    borderRadius={4}
+                    style={{ marginTop: 4 }}
+                  />
                 </View>
                 <Skeleton width={80} height={16} borderRadius={4} />
               </View>
@@ -488,8 +514,8 @@ const styles = StyleSheet.create({
     borderColor: "#E5E7EB",
   },
   filterButtonActive: {
-    backgroundColor: "#1E40AF",
-    borderColor: "#1E40AF",
+    backgroundColor: "#4939b0",
+    borderColor: "#4939b0",
   },
   filterButtonText: {
     fontSize: 14,
@@ -566,4 +592,3 @@ const styles = StyleSheet.create({
     color: "#6B7280",
   },
 });
-

@@ -36,44 +36,55 @@ export default function DepositPage() {
   const { isAuthenticated, token, userId } = useAuth();
   const queryClient = useQueryClient();
 
-  const depositMutation = useMutation<DepositResponse, Error, { amount: number }>({
+  const depositMutation = useMutation<
+    DepositResponse,
+    Error,
+    { amount: number }
+  >({
     mutationFn: ({ amount: depositAmount }) =>
       deposit({ amount: depositAmount }),
     onSuccess: (data, variables) => {
-      Alert.alert("Success", `Deposit of ${variables.amount.toFixed(3)} KWD was successful!`, [
-        {
-          text: "OK",
-          onPress: () => {
-            // Invalidate queries to refresh data
-            queryClient.invalidateQueries({ queryKey: ["myTransactions"] });
-            queryClient.invalidateQueries({ queryKey: ["myProfile"] });
-            router.back();
+      Alert.alert(
+        "Success",
+        `Deposit of ${variables.amount.toFixed(3)} KWD was successful!`,
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              // Invalidate queries to refresh data
+              queryClient.invalidateQueries({ queryKey: ["myTransactions"] });
+              queryClient.invalidateQueries({ queryKey: ["myProfile"] });
+              router.back();
+            },
           },
-        },
-      ]);
+        ]
+      );
     },
     onError: (error: any) => {
       let errorMessage = "Deposit failed. Please try again.";
-      
+
       if (error.response) {
         const status = error.response.status;
         const errorData = error.response.data;
-        
+
         if (status === 403) {
-          errorMessage = "Access forbidden. Your session may have expired. Please try logging in again.";
+          errorMessage =
+            "Access forbidden. Your session may have expired. Please try logging in again.";
         } else if (status === 401) {
           errorMessage = "Unauthorized. Please log in again.";
         } else if (status === 400) {
-          errorMessage = errorData?.message || "Invalid request. Please check the amount.";
+          errorMessage =
+            errorData?.message || "Invalid request. Please check the amount.";
         } else if (status >= 500) {
           errorMessage = "Server error. Please try again later.";
         } else {
-          errorMessage = errorData?.message || error.response.statusText || errorMessage;
+          errorMessage =
+            errorData?.message || error.response.statusText || errorMessage;
         }
       } else if (error.request) {
         errorMessage = "Network error. Please check your connection.";
       }
-      
+
       Alert.alert("Deposit Failed", errorMessage);
     },
   });
@@ -93,7 +104,9 @@ export default function DepositPage() {
 
     Alert.alert(
       "Confirm Deposit",
-      `Are you sure you want to deposit ${depositAmount.toFixed(3)} KWD to your account?`,
+      `Are you sure you want to deposit ${depositAmount.toFixed(
+        3
+      )} KWD to your account?`,
       [
         {
           text: "Cancel",
@@ -116,7 +129,7 @@ export default function DepositPage() {
   ) => {
     // Remove any non-numeric characters except decimal point
     const cleaned = text.replace(/[^0-9.]/g, "");
-    
+
     // Ensure only one decimal point
     const parts = cleaned.split(".");
     if (parts.length > 2) {
@@ -131,7 +144,7 @@ export default function DepositPage() {
     return (
       <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#1E40AF" />
+          <ActivityIndicator size="large" color="#4939b0" />
         </View>
       </SafeAreaView>
     );
@@ -178,7 +191,9 @@ export default function DepositPage() {
                     placeholder="Enter amount"
                     placeholderTextColor="#9CA3AF"
                     value={values.amount}
-                    onChangeText={(text) => handleAmountChange(text, setFieldValue)}
+                    onChangeText={(text) =>
+                      handleAmountChange(text, setFieldValue)
+                    }
                     onBlur={handleBlur("amount")}
                     keyboardType="decimal-pad"
                     returnKeyType="done"
@@ -195,7 +210,8 @@ export default function DepositPage() {
                 <TouchableOpacity
                   style={[
                     styles.depositButton,
-                    (!values.amount || depositMutation.isPending) && styles.depositButtonDisabled,
+                    (!values.amount || depositMutation.isPending) &&
+                      styles.depositButtonDisabled,
                   ]}
                   onPress={() => handleSubmit()}
                   disabled={!values.amount || depositMutation.isPending}
@@ -287,7 +303,7 @@ const styles = StyleSheet.create({
     marginTop: "auto",
   },
   depositButton: {
-    backgroundColor: "#1E40AF",
+    backgroundColor: "#4939b0",
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: "center",
@@ -310,4 +326,3 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 });
-

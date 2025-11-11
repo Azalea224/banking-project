@@ -274,7 +274,7 @@ export default function GenerateLinkPage() {
     return (
       <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#1E40AF" />
+          <ActivityIndicator size="large" color="#4939b0" />
         </View>
       </SafeAreaView>
     );
@@ -463,12 +463,12 @@ const styles = StyleSheet.create({
   infoTitle: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#1E40AF",
+    color: "#4939b0",
     marginBottom: 8,
   },
   infoText: {
     fontSize: 14,
-    color: "#1E40AF",
+    color: "#4939b0",
     lineHeight: 20,
   },
   inputContainer: {

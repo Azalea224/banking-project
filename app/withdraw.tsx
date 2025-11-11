@@ -37,53 +37,62 @@ export default function WithdrawPage() {
   const { isAuthenticated, token } = useAuth();
   const queryClient = useQueryClient();
 
-  const {
-    data: profile,
-    isLoading: profileLoading,
-  } = useQuery<UserProfile>({
+  const { data: profile, isLoading: profileLoading } = useQuery<UserProfile>({
     queryKey: ["myProfile"],
     queryFn: getMyProfile,
     enabled: isAuthenticated,
   });
 
-  const withdrawMutation = useMutation<WithdrawResponse, Error, { amount: number }>({
+  const withdrawMutation = useMutation<
+    WithdrawResponse,
+    Error,
+    { amount: number }
+  >({
     mutationFn: ({ amount: withdrawAmount }) =>
       withdraw({ amount: withdrawAmount }),
     onSuccess: (data, variables) => {
-      Alert.alert("Success", `Withdrawal of ${variables.amount.toFixed(3)} KWD was successful!`, [
-        {
-          text: "OK",
-          onPress: () => {
-            // Invalidate queries to refresh data
-            queryClient.invalidateQueries({ queryKey: ["myTransactions"] });
-            queryClient.invalidateQueries({ queryKey: ["myProfile"] });
-            router.back();
+      Alert.alert(
+        "Success",
+        `Withdrawal of ${variables.amount.toFixed(3)} KWD was successful!`,
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              // Invalidate queries to refresh data
+              queryClient.invalidateQueries({ queryKey: ["myTransactions"] });
+              queryClient.invalidateQueries({ queryKey: ["myProfile"] });
+              router.back();
+            },
           },
-        },
-      ]);
+        ]
+      );
     },
     onError: (error: any) => {
       let errorMessage = "Withdrawal failed. Please try again.";
-      
+
       if (error.response) {
         const status = error.response.status;
         const errorData = error.response.data;
-        
+
         if (status === 403) {
-          errorMessage = "Access forbidden. Your session may have expired. Please try logging in again.";
+          errorMessage =
+            "Access forbidden. Your session may have expired. Please try logging in again.";
         } else if (status === 401) {
           errorMessage = "Unauthorized. Please log in again.";
         } else if (status === 400) {
-          errorMessage = errorData?.message || "Invalid request. Please check the amount or ensure you have sufficient balance.";
+          errorMessage =
+            errorData?.message ||
+            "Invalid request. Please check the amount or ensure you have sufficient balance.";
         } else if (status >= 500) {
           errorMessage = "Server error. Please try again later.";
         } else {
-          errorMessage = errorData?.message || error.response.statusText || errorMessage;
+          errorMessage =
+            errorData?.message || error.response.statusText || errorMessage;
         }
       } else if (error.request) {
         errorMessage = "Network error. Please check your connection.";
       }
-      
+
       Alert.alert("Withdrawal Failed", errorMessage);
     },
   });
@@ -102,13 +111,18 @@ export default function WithdrawPage() {
     }
 
     if (profile?.balance !== undefined && withdrawAmount > profile.balance) {
-      Alert.alert("Error", "Insufficient balance. You cannot withdraw more than your current balance.");
+      Alert.alert(
+        "Error",
+        "Insufficient balance. You cannot withdraw more than your current balance."
+      );
       return;
     }
 
     Alert.alert(
       "Confirm Withdrawal",
-      `Are you sure you want to withdraw ${withdrawAmount.toFixed(3)} KWD from your account?`,
+      `Are you sure you want to withdraw ${withdrawAmount.toFixed(
+        3
+      )} KWD from your account?`,
       [
         {
           text: "Cancel",
@@ -138,7 +152,9 @@ export default function WithdrawPage() {
 
     Alert.alert(
       "Confirm Withdraw All",
-      `Are you sure you want to withdraw all ${profile.balance.toFixed(3)} KWD from your account?`,
+      `Are you sure you want to withdraw all ${profile.balance.toFixed(
+        3
+      )} KWD from your account?`,
       [
         {
           text: "Cancel",
@@ -161,7 +177,7 @@ export default function WithdrawPage() {
   ) => {
     // Remove any non-numeric characters except decimal point
     const cleaned = text.replace(/[^0-9.]/g, "");
-    
+
     // Ensure only one decimal point
     const parts = cleaned.split(".");
     if (parts.length > 2) {
@@ -176,7 +192,7 @@ export default function WithdrawPage() {
     return (
       <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#1E40AF" />
+          <ActivityIndicator size="large" color="#4939b0" />
         </View>
       </SafeAreaView>
     );
@@ -216,7 +232,7 @@ export default function WithdrawPage() {
                 <View style={styles.balanceInfo}>
                   <Text style={styles.balanceLabel}>Available Balance</Text>
                   {profileLoading ? (
-                    <ActivityIndicator size="small" color="#1E40AF" />
+                    <ActivityIndicator size="small" color="#4939b0" />
                   ) : (
                     <Text style={styles.balanceAmount}>
                       {profile?.balance?.toFixed(3) || "0.000"} KWD
@@ -234,7 +250,9 @@ export default function WithdrawPage() {
                     placeholder="Enter amount"
                     placeholderTextColor="#9CA3AF"
                     value={values.amount}
-                    onChangeText={(text) => handleAmountChange(text, setFieldValue)}
+                    onChangeText={(text) =>
+                      handleAmountChange(text, setFieldValue)
+                    }
                     onBlur={handleBlur("amount")}
                     keyboardType="decimal-pad"
                     returnKeyType="done"
@@ -251,7 +269,8 @@ export default function WithdrawPage() {
                 <TouchableOpacity
                   style={[
                     styles.withdrawButton,
-                    (!values.amount || withdrawMutation.isPending) && styles.withdrawButtonDisabled,
+                    (!values.amount || withdrawMutation.isPending) &&
+                      styles.withdrawButtonDisabled,
                   ]}
                   onPress={() => handleSubmit()}
                   disabled={!values.amount || withdrawMutation.isPending}
@@ -259,23 +278,35 @@ export default function WithdrawPage() {
                   {withdrawMutation.isPending ? (
                     <ActivityIndicator color="#FFFFFF" />
                   ) : (
-                    <Text style={styles.withdrawButtonText}>Withdraw Money</Text>
+                    <Text style={styles.withdrawButtonText}>
+                      Withdraw Money
+                    </Text>
                   )}
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   style={[
                     styles.withdrawAllButton,
-                    (profileLoading || !profile?.balance || profile.balance <= 0 || withdrawMutation.isPending) &&
+                    (profileLoading ||
+                      !profile?.balance ||
+                      profile.balance <= 0 ||
+                      withdrawMutation.isPending) &&
                       styles.withdrawAllButtonDisabled,
                   ]}
                   onPress={handleWithdrawAll}
-                  disabled={profileLoading || !profile?.balance || profile.balance <= 0 || withdrawMutation.isPending}
+                  disabled={
+                    profileLoading ||
+                    !profile?.balance ||
+                    profile.balance <= 0 ||
+                    withdrawMutation.isPending
+                  }
                 >
                   {withdrawMutation.isPending ? (
-                    <ActivityIndicator color="#1E40AF" />
+                    <ActivityIndicator color="#4939b0" />
                   ) : (
-                    <Text style={styles.withdrawAllButtonText}>Withdraw All</Text>
+                    <Text style={styles.withdrawAllButtonText}>
+                      Withdraw All
+                    </Text>
                   )}
                 </TouchableOpacity>
               </View>
@@ -378,7 +409,7 @@ const styles = StyleSheet.create({
     marginTop: "auto",
   },
   withdrawButton: {
-    backgroundColor: "#1E40AF",
+    backgroundColor: "#4939b0",
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: "center",
@@ -403,14 +434,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginTop: 12,
     borderWidth: 2,
-    borderColor: "#1E40AF",
+    borderColor: "#4939b0",
   },
   withdrawAllButtonDisabled: {
     opacity: 0.6,
     borderColor: "#9CA3AF",
   },
   withdrawAllButtonText: {
-    color: "#1E40AF",
+    color: "#4939b0",
     fontSize: 16,
     fontWeight: "700",
   },
@@ -420,4 +451,3 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 });
-
