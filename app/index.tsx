@@ -20,6 +20,7 @@ import { getAllUsers, User, getUserById } from "../api/auth";
 import { getMyProfile, UserProfile } from "../api/auth";
 import { Skeleton, SkeletonText, SkeletonCircle } from "../components/Skeleton";
 import { useGamification } from "../hooks/useGamification";
+import { GamificationSummaryCard } from "../components/GamificationSummaryCard";
 
 const BASE_URL = "https://react-bank-project.eapi.joincoded.com";
 
@@ -453,17 +454,6 @@ export default function HomePage() {
                 />
               </View>
             </View>
-            <View style={styles.accountInfo}>
-              <View style={styles.accountItem}>
-                <Skeleton width={120} height={12} borderRadius={4} />
-                <Skeleton
-                  width={150}
-                  height={16}
-                  borderRadius={4}
-                  style={{ marginTop: 4 }}
-                />
-              </View>
-            </View>
           </View>
           <View style={styles.quickActionsContainer}>
             <Skeleton width={150} height={20} borderRadius={4} />
@@ -679,30 +669,60 @@ export default function HomePage() {
               )}
             </View>
           </View>
-          <View style={styles.accountInfo}>
-            <View style={styles.accountItem}>
-              <Text style={styles.accountLabel}>Account Number</Text>
-              {profileLoading ? (
-                <Skeleton
-                  width={150}
-                  height={16}
-                  borderRadius={4}
-                  style={{ marginTop: 4 }}
-                />
-              ) : (
-                <Text style={styles.accountValue}>
-                  {profile?._id !== undefined && profile._id !== null
-                    ? String(profile._id)
-                    : profile?.id !== undefined && profile.id !== null
-                    ? String(profile.id)
-                    : userId !== null && userId !== undefined
-                    ? String(userId)
-                    : "N/A"}
-                </Text>
+        </View>
+
+        {gamification && (
+          <View style={styles.achievementsContainer}>
+            <View style={styles.achievementsCard}>
+              <GamificationSummaryCard
+                level={gamification.level}
+                totalPoints={gamification.totalPoints}
+                xp={gamification.xp}
+                xpToNextLevel={gamification.xpToNextLevel}
+                levelProgress={gamification.levelProgress}
+                unlockedCount={
+                  gamification.achievements.filter((a) => a.unlocked).length
+                }
+                lockedCount={
+                  gamification.achievements.filter((a) => !a.unlocked).length
+                }
+                totalTransactions={gamification.totalTransactions}
+                variant="light"
+                containerMode={true}
+              />
+              {gamification.achievements.filter((a) => a.unlocked).length > 0 && (
+                <View style={styles.recentAchievementsSection}>
+                  <View style={styles.recentAchievementsHeader}>
+                    <Text style={styles.recentAchievementsTitle}>Recent Achievements</Text>
+                    <TouchableOpacity onPress={() => router.push("/achievements?filter=unlocked")}>
+                      <Text style={styles.seeAllText}>See All</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.recentAchievementsScroll}
+                    contentContainerStyle={styles.recentAchievementsList}
+                  >
+                    {gamification.achievements
+                      .filter((a) => a.unlocked)
+                      .slice(0, 5)
+                      .map((achievement) => (
+                        <TouchableOpacity
+                          key={achievement.id}
+                          style={styles.recentAchievementItem}
+                          onPress={() => router.push("/achievements?filter=unlocked")}
+                        >
+                          <Text style={styles.recentAchievementIcon}>{achievement.icon}</Text>
+                          <Text style={styles.recentAchievementName}>{achievement.name}</Text>
+                        </TouchableOpacity>
+                      ))}
+                  </ScrollView>
+                </View>
               )}
             </View>
           </View>
-        </View>
+        )}
 
         <View style={styles.quickActionsContainer}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
@@ -1212,5 +1232,65 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 14,
     color: "#6B7280",
+  },
+  achievementsContainer: {
+    marginHorizontal: 20,
+    marginTop: 20,
+  },
+  achievementsCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    boxShadow: "0px 4px 8px 0px rgba(0, 0, 0, 0.1)",
+    elevation: 5,
+    overflow: "hidden",
+  },
+  recentAchievementsSection: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: "#F3F4F6",
+    marginTop: 0,
+  },
+  recentAchievementsHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  recentAchievementsTitle: {
+    fontSize: 20,
+    color: "#111827",
+    fontWeight: "700",
+  },
+  recentAchievementsScroll: {
+    marginHorizontal: -20,
+    paddingHorizontal: 20,
+  },
+  recentAchievementsList: {
+    flexDirection: "row",
+    gap: 12,
+    paddingRight: 20,
+  },
+  recentAchievementItem: {
+    alignItems: "center",
+    justifyContent: "center",
+    minWidth: 100,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: "#F9FAFB",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  recentAchievementIcon: {
+    fontSize: 40,
+    marginBottom: 8,
+  },
+  recentAchievementName: {
+    fontSize: 12,
+    color: "#111827",
+    fontWeight: "600",
+    textAlign: "center",
   },
 });
