@@ -15,29 +15,12 @@ import { getMyTransactions, Transaction } from "../api/transactions";
 import { getAllUsers, User, getUserById } from "../api/auth";
 import { useAuth } from "../contexts/AuthContext";
 
-// Format large numbers with notation (K, M, B, etc.)
+// Format numbers with commas and decimals
 const formatAmount = (amount: number, decimals: number = 3): string => {
-  const absAmount = Math.abs(amount);
-
-  if (absAmount >= 1000000000000) {
-    // Trillions - show full number with commas
-    return absAmount.toLocaleString("en-US", {
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
-    });
-  } else if (absAmount >= 1000000000) {
-    // Billions
-    return (amount / 1000000000).toFixed(decimals) + "B";
-  } else if (absAmount >= 1000000) {
-    // Millions
-    return (amount / 1000000).toFixed(decimals) + "M";
-  } else if (absAmount >= 1000) {
-    // Thousands
-    return (amount / 1000).toFixed(decimals) + "K";
-  } else {
-    // Less than 1000, show full number with decimals
-    return amount.toFixed(decimals);
-  }
+  return amount.toLocaleString("en-US", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
 };
 
 export default function TransactionDetailPage() {

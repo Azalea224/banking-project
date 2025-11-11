@@ -26,29 +26,12 @@ import { Skeleton, SkeletonCircle, SkeletonText } from "../components/Skeleton";
 
 const BASE_URL = "https://react-bank-project.eapi.joincoded.com";
 
-// Format large numbers with notation (K, M, B, etc.)
+// Format numbers with commas and decimals
 const formatAmount = (amount: number, decimals: number = 3): string => {
-  const absAmount = Math.abs(amount);
-
-  if (absAmount >= 1000000000000) {
-    // Trillions - show full number with commas
-    return absAmount.toLocaleString("en-US", {
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
-    });
-  } else if (absAmount >= 1000000000) {
-    // Billions
-    return (amount / 1000000000).toFixed(decimals) + "B";
-  } else if (absAmount >= 1000000) {
-    // Millions
-    return (amount / 1000000).toFixed(decimals) + "M";
-  } else if (absAmount >= 1000) {
-    // Thousands
-    return (amount / 1000).toFixed(decimals) + "K";
-  } else {
-    // Less than 1000, show full number with decimals
-    return amount.toFixed(decimals);
-  }
+  return amount.toLocaleString("en-US", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
 };
 
 export default function ProfilePage() {
@@ -314,7 +297,7 @@ export default function ProfilePage() {
           <View style={styles.placeholder} />
         </View>
 
-        <View style={styles.profileSection}>
+        <View style={styles.profileCard}>
           <TouchableOpacity
             onPress={pickImage}
             disabled={updateProfileMutation.isPending}
@@ -365,33 +348,32 @@ export default function ProfilePage() {
           <Text style={styles.username}>{profile?.username || "User"}</Text>
           {profile?.balance !== undefined && (
             <Text style={styles.balance}>
-              Balance: {formatAmount(profile.balance)} KWD
+              {formatAmount(profile.balance)} KWD
             </Text>
           )}
-          <View style={styles.profileDetails}>
-            <View style={styles.profileDetailItem}>
-              <Text style={styles.profileDetailLabel}>Account Number</Text>
-              <Text style={styles.profileDetailValue}>
-                {profile?._id !== undefined && profile._id !== null
-                  ? String(profile._id)
-                  : profile?.id !== undefined && profile.id !== null
-                  ? String(profile.id)
-                  : userId !== null && userId !== undefined
-                  ? String(userId)
-                  : "N/A"}
-              </Text>
-            </View>
-            {profile?.username && (
-              <View style={styles.profileDetailItem}>
-                <Text style={styles.profileDetailLabel}>Username</Text>
-                <Text style={styles.profileDetailValue}>
-                  {profile.username}
-                </Text>
-              </View>
-            )}
+        </View>
+
+        <View style={styles.detailsCard}>
+          <View style={styles.profileDetailItem}>
+            <Text style={styles.profileDetailLabel}>Account Number</Text>
+            <Text style={styles.profileDetailValue}>
+              {profile?._id !== undefined && profile._id !== null
+                ? String(profile._id)
+                : profile?.id !== undefined && profile.id !== null
+                ? String(profile.id)
+                : userId !== null && userId !== undefined
+                ? String(userId)
+                : "N/A"}
+            </Text>
           </View>
+          {profile?.username && (
+            <View style={styles.profileDetailItem}>
+              <Text style={styles.profileDetailLabel}>Username</Text>
+              <Text style={styles.profileDetailValue}>{profile.username}</Text>
+            </View>
+          )}
           <Text style={styles.editImageHint}>
-            Tap the image to update your profile picture
+            Tap the image above to update your profile picture
           </Text>
         </View>
       </ScrollView>
@@ -434,6 +416,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 10,
+    backgroundColor: "#FFFFFF",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E7EB",
   },
   backButton: {
     width: 40,
@@ -454,10 +439,24 @@ const styles = StyleSheet.create({
   placeholder: {
     width: 40,
   },
-  profileSection: {
+  profileCard: {
+    backgroundColor: "#4939b0",
+    marginHorizontal: 20,
+    marginTop: 20,
+    borderRadius: 20,
+    padding: 32,
     alignItems: "center",
-    paddingVertical: 32,
-    paddingHorizontal: 20,
+    boxShadow: "0px 4px 8px 0px rgba(73, 57, 176, 0.3)",
+    elevation: 5,
+  },
+  detailsCard: {
+    backgroundColor: "#FFFFFF",
+    marginHorizontal: 20,
+    marginTop: 20,
+    borderRadius: 20,
+    padding: 24,
+    boxShadow: "0px 2px 4px 0px rgba(0, 0, 0, 0.1)",
+    elevation: 3,
   },
   imageContainer: {
     position: "relative",
@@ -467,8 +466,8 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    borderWidth: 3,
-    borderColor: "#4939b0",
+    borderWidth: 4,
+    borderColor: "#FFFFFF",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -476,19 +475,20 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 0,
     right: 0,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#4939b0",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#FFFFFF",
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 3,
-    borderColor: "#FFFFFF",
+    borderColor: "#4939b0",
     boxShadow: "0px 2px 4px 0px rgba(0, 0, 0, 0.2)",
     elevation: 4,
   },
   editImageIcon: {
-    fontSize: 18,
+    fontSize: 20,
+    color: "#4939b0",
   },
   editImageHint: {
     fontSize: 12,
@@ -500,47 +500,46 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: "#4939b0",
+    backgroundColor: "#FFFFFF",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 16,
+    borderWidth: 4,
+    borderColor: "#FFFFFF",
   },
   profileImagePlaceholderText: {
     fontSize: 48,
-    color: "#FFFFFF",
+    color: "#4939b0",
     fontWeight: "700",
   },
   username: {
     fontSize: 28,
     fontWeight: "700",
-    color: "#111827",
+    color: "#FFFFFF",
+    marginTop: 16,
     marginBottom: 8,
   },
   balance: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#10B981",
-    marginBottom: 24,
-  },
-  profileDetails: {
-    width: "100%",
-    marginTop: 8,
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    marginTop: 4,
   },
   profileDetailItem: {
-    marginBottom: 12,
+    marginBottom: 20,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F3F4F6",
   },
   profileDetailLabel: {
     fontSize: 12,
     color: "#6B7280",
     fontWeight: "500",
-    marginBottom: 4,
-    textAlign: "center",
+    marginBottom: 8,
   },
   profileDetailValue: {
     fontSize: 16,
     color: "#111827",
     fontWeight: "600",
-    textAlign: "center",
   },
   retryButton: {
     backgroundColor: "#4939b0",
