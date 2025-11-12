@@ -51,6 +51,8 @@ export default function HomePage() {
     queryKey: ["myTransactions"],
     queryFn: getMyTransactions,
     enabled: isAuthenticated,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const {
@@ -264,6 +266,13 @@ export default function HomePage() {
   const formattedTransactions = useMemo(() => {
     if (!transactions || transactions.length === 0) return [];
 
+    // Sort transactions by date (newest first)
+    const sortedTransactions = [...transactions].sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return dateB - dateA; // Descending order (newest first)
+    });
+
     // Create a map of user ID to username for quick lookup
     // Use allUsersWithMissing which includes both allUsers and fetched missing users
     // Handle both numeric and string IDs
@@ -280,7 +289,7 @@ export default function HomePage() {
       });
     }
 
-    return transactions.slice(0, 10).map((transaction) => {
+    return sortedTransactions.slice(0, 10).map((transaction) => {
       // Helper function to get username from ID or return the value if it's already a username
       // Handles both numeric IDs and alphanumeric string IDs
       const getUsername = (
