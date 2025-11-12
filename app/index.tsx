@@ -12,9 +12,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../contexts/AuthContext";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { getMyTransactions, Transaction } from "../api/transactions";
 import { getAllUsers, User, getUserById } from "../api/auth";
 import { getMyProfile, UserProfile } from "../api/auth";
@@ -40,17 +40,23 @@ export default function HomePage() {
     useAuth();
   const [selectedFilter, setSelectedFilter] = useState<TransactionFilter>(null);
   const [imageError, setImageError] = useState(false);
-  const [seenTransactionIds, setSeenTransactionIds] = useState<Set<string | number>>(new Set());
+  const [seenTransactionIds, setSeenTransactionIds] = useState<
+    Set<string | number>
+  >(new Set());
   const { playSound } = useSound();
+  const queryClient = useQueryClient();
 
   const {
     data: transactions,
     isLoading: transactionsLoading,
     error: transactionsError,
+    refetch: refetchTransactions,
   } = useQuery<Transaction[]>({
     queryKey: ["myTransactions"],
     queryFn: getMyTransactions,
     enabled: isAuthenticated,
+    refetchOnMount: true,
+    staleTime: 0, // Always consider data stale to allow refetching
   });
 
   const {
@@ -260,6 +266,16 @@ export default function HomePage() {
     }
   }, [profile?.image]);
 
+  // Refetch transactions when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      if (isAuthenticated) {
+        queryClient.invalidateQueries({ queryKey: ["myTransactions"] });
+        refetchTransactions();
+      }
+    }, [isAuthenticated, queryClient, refetchTransactions])
+  );
+
   // Format transactions for display
   const formattedTransactions = useMemo(() => {
     if (!transactions || transactions.length === 0) return [];
@@ -411,11 +427,17 @@ export default function HomePage() {
 
   // Initialize seen transaction IDs on first load
   useEffect(() => {
-    if (formattedTransactions && formattedTransactions.length > 0 && seenTransactionIds.size === 0) {
+    if (
+      formattedTransactions &&
+      formattedTransactions.length > 0 &&
+      seenTransactionIds.size === 0
+    ) {
       // Mark all current transactions as seen on initial load
       const initialIds = new Set<string | number>();
       formattedTransactions.forEach((transaction) => {
-        initialIds.add(transaction.id);
+        if (transaction.id !== undefined && transaction.id !== null) {
+          initialIds.add(transaction.id);
+        }
       });
       setSeenTransactionIds(initialIds);
     }
@@ -423,23 +445,32 @@ export default function HomePage() {
 
   // Detect new income transactions and play receive sound
   useEffect(() => {
-    if (!formattedTransactions || formattedTransactions.length === 0 || seenTransactionIds.size === 0) return;
+    if (
+      !formattedTransactions ||
+      formattedTransactions.length === 0 ||
+      seenTransactionIds.size === 0
+    )
+      return;
 
     // Find new income transactions that haven't been seen before
     const newIncomeTransactions = formattedTransactions.filter(
       (transaction) =>
         transaction.type === "income" &&
+        transaction.id !== undefined &&
+        transaction.id !== null &&
         !seenTransactionIds.has(transaction.id)
     );
 
     // Play sound for each new income transaction
     if (newIncomeTransactions.length > 0) {
       playSound("Receive.mp3");
-      
+
       // Update seen transaction IDs
       const newSeenIds = new Set(seenTransactionIds);
       newIncomeTransactions.forEach((transaction) => {
-        newSeenIds.add(transaction.id);
+        if (transaction.id !== undefined && transaction.id !== null) {
+          newSeenIds.add(transaction.id);
+        }
       });
       setSeenTransactionIds(newSeenIds);
     }
@@ -684,7 +715,10 @@ export default function HomePage() {
                               : `${BASE_URL}${
                                   imageValue.startsWith("/") ? "" : "/"
                                 }${imageValue}`;
-                          } else if (imageValue && typeof imageValue === "object") {
+                          } else if (
+                            imageValue &&
+                            typeof imageValue === "object"
+                          ) {
                             const imageObj = imageValue as any;
                             return imageObj.uri || String(imageObj) || "";
                           }
@@ -709,7 +743,9 @@ export default function HomePage() {
                   {profileLoading ? (
                     <Skeleton width={200} height={36} borderRadius={4} />
                   ) : (
-                    <Text style={styles.balanceAmount}>{accountBalance} KWD</Text>
+                    <Text style={styles.balanceAmount}>
+                      {accountBalance} KWD
+                    </Text>
                   )}
                 </View>
               </View>
@@ -735,11 +771,18 @@ export default function HomePage() {
                   variant="dark"
                   containerMode={true}
                 />
-                {gamification.achievements.filter((a) => a.unlocked).length > 0 && (
+                {gamification.achievements.filter((a) => a.unlocked).length >
+                  0 && (
                   <View style={styles.recentAchievementsSection}>
                     <View style={styles.recentAchievementsHeader}>
-                      <Text style={styles.recentAchievementsTitle}>Recent Achievements</Text>
-                      <TouchableOpacity onPress={() => router.push("/achievements?filter=unlocked")}>
+                      <Text style={styles.recentAchievementsTitle}>
+                        Recent Achievements
+                      </Text>
+                      <TouchableOpacity
+                        onPress={() =>
+                          router.push("/achievements?filter=unlocked")
+                        }
+                      >
                         <Text style={styles.seeAllText}>See All</Text>
                       </TouchableOpacity>
                     </View>
@@ -756,10 +799,16 @@ export default function HomePage() {
                           <TouchableOpacity
                             key={achievement.id}
                             style={styles.recentAchievementItem}
-                            onPress={() => router.push("/achievements?filter=unlocked")}
+                            onPress={() =>
+                              router.push("/achievements?filter=unlocked")
+                            }
                           >
-                            <Text style={styles.recentAchievementIcon}>{achievement.icon}</Text>
-                            <Text style={styles.recentAchievementName}>{achievement.name}</Text>
+                            <Text style={styles.recentAchievementIcon}>
+                              {achievement.icon}
+                            </Text>
+                            <Text style={styles.recentAchievementName}>
+                              {achievement.name}
+                            </Text>
                           </TouchableOpacity>
                         ))}
                     </ScrollView>
