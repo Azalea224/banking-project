@@ -1023,7 +1023,8 @@ const styles = StyleSheet.create({
   sectionDivider: {
     height: 1,
     backgroundColor: "rgba(255, 255, 255, 0.2)",
-    marginVertical: 20,
+    marginTop: 20,
+    marginBottom: 24,
   },
   balanceCard: {
     backgroundColor: "#4939b0",
@@ -1262,17 +1263,18 @@ const styles = StyleSheet.create({
   },
   recentAchievementsSection: {
     paddingHorizontal: 0,
-    paddingBottom: 0,
-    paddingTop: 20,
+    paddingTop: 24,
+    paddingBottom: 24,
     borderTopWidth: 1,
     borderTopColor: "rgba(255, 255, 255, 0.2)",
-    marginTop: 0,
+    marginTop: 24,
   },
   recentAchievementsHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 16,
+    paddingHorizontal: 0,
   },
   recentAchievementsTitle: {
     fontSize: 20,
@@ -1282,6 +1284,7 @@ const styles = StyleSheet.create({
   recentAchievementsScroll: {
     marginHorizontal: -24,
     paddingHorizontal: 24,
+    marginTop: 0,
   },
   recentAchievementsList: {
     flexDirection: "row",

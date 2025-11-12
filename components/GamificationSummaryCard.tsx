@@ -208,7 +208,9 @@ const lightStyles = StyleSheet.create({
 const darkStyles = StyleSheet.create({
   summaryCard: {
     backgroundColor: "transparent",
-    paddingTop: 24,
+    paddingTop: 0,
+    paddingBottom: 0,
+    marginBottom: 0,
   },
   ...commonStyles,
   pointsLabel: {

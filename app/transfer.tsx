@@ -241,19 +241,25 @@ export default function TransferPage() {
                   ) : (
                     <View style={styles.usersListContainer}>
                       {filteredUsers.map((item, index) => {
+                        // Compare both id and _id, handle string/number conversion
+                        const itemId = item._id ?? item.id;
+                        const selectedId = selectedUser?._id ?? selectedUser?.id;
                         const isSelected =
                           selectedUser !== null &&
-                          item.id !== undefined &&
-                          item.username !== undefined &&
-                          selectedUser.id === item.id;
+                          itemId !== undefined &&
+                          selectedId !== undefined &&
+                          String(itemId) === String(selectedId);
                         return (
                           <TouchableOpacity
-                            key={item.id?.toString() || item.username || `user-${index}`}
+                            key={itemId?.toString() || item.username || `user-${index}`}
                             style={[
                               styles.userItem,
                               isSelected && styles.userItemSelected,
                             ]}
-                            onPress={() => setSelectedUser(item)}
+                            onPress={() => {
+                              setSelectedUser(item);
+                              Keyboard.dismiss();
+                            }}
                             activeOpacity={0.7}
                           >
                             {item.image ? (
@@ -265,11 +271,20 @@ export default function TransferPage() {
                                         item.image.startsWith("/") ? "" : "/"
                                       }${item.image}`,
                                 }}
-                                style={styles.userImage}
+                                style={[
+                                  styles.userImage,
+                                  isSelected && styles.userImageSelected,
+                                ]}
                               />
                             ) : (
-                              <View style={styles.userImagePlaceholder}>
-                                <Text style={styles.userImagePlaceholderText}>
+                              <View style={[
+                                styles.userImagePlaceholder,
+                                isSelected && styles.userImagePlaceholderSelected,
+                              ]}>
+                                <Text style={[
+                                  styles.userImagePlaceholderText,
+                                  isSelected && styles.userImagePlaceholderTextSelected,
+                                ]}>
                                   {item.username?.charAt(0).toUpperCase() || "U"}
                                 </Text>
                               </View>
@@ -379,8 +394,8 @@ export default function TransferPage() {
                   </View>
                 </View>
 
-                {/* Summary Card */}
-                {selectedUser && values.amount && (
+                {/* Summary Card - Show recipient immediately when selected */}
+                {selectedUser && (
                   <View style={styles.summaryCard}>
                     <View style={styles.summaryRow}>
                       <Text style={styles.summaryLabel}>Sending to</Text>
@@ -409,13 +424,17 @@ export default function TransferPage() {
                         </Text>
                       </View>
                     </View>
-                    <View style={styles.summaryDivider} />
-                    <View style={styles.summaryRow}>
-                      <Text style={styles.summaryLabel}>Amount</Text>
-                      <Text style={styles.summaryAmount}>
-                        {parseFloat(values.amount || "0").toFixed(3)} KWD
-                      </Text>
-                    </View>
+                    {values.amount && (
+                      <>
+                        <View style={styles.summaryDivider} />
+                        <View style={styles.summaryRow}>
+                          <Text style={styles.summaryLabel}>Amount</Text>
+                          <Text style={styles.summaryAmount}>
+                            {parseFloat(values.amount || "0").toFixed(3)} KWD
+                          </Text>
+                        </View>
+                      </>
+                    )}
                   </View>
                 )}
 
@@ -661,15 +680,21 @@ const styles = StyleSheet.create({
   },
   userItemSelected: {
     borderColor: "#4939b0",
-    backgroundColor: "#4939b0",
-    boxShadow: "0px 2px 4px 0px rgba(73, 57, 176, 0.3)",
-    elevation: 3,
+    backgroundColor: "#EEF2FF",
+    borderWidth: 2,
+    boxShadow: "0px 2px 8px 0px rgba(73, 57, 176, 0.25)",
+    elevation: 4,
   },
   userImage: {
     width: 44,
     height: 44,
     borderRadius: 22,
     marginRight: 10,
+    borderWidth: 2,
+    borderColor: "transparent",
+  },
+  userImageSelected: {
+    borderColor: "#4939b0",
   },
   userImagePlaceholder: {
     width: 44,
@@ -679,11 +704,20 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginRight: 10,
+    borderWidth: 2,
+    borderColor: "transparent",
+  },
+  userImagePlaceholderSelected: {
+    borderColor: "#4939b0",
+    backgroundColor: "#4939b0",
   },
   userImagePlaceholderText: {
     fontSize: 20,
     color: "#FFFFFF",
     fontWeight: "700",
+  },
+  userImagePlaceholderTextSelected: {
+    color: "#FFFFFF",
   },
   userInfo: {
     flex: 1,
@@ -694,19 +728,24 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   userNameSelected: {
-    color: "#FFFFFF",
+    color: "#4939b0",
+    fontWeight: "700",
   },
   checkmarkContainer: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: "#4939b0",
     justifyContent: "center",
     alignItems: "center",
     marginLeft: 8,
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+    boxShadow: "0px 2px 4px 0px rgba(73, 57, 176, 0.4)",
+    elevation: 3,
   },
   checkmark: {
-    fontSize: 14,
+    fontSize: 16,
     color: "#FFFFFF",
     fontWeight: "700",
   },
