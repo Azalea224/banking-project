@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   TextInput,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
@@ -16,6 +17,7 @@ import { router } from "expo-router";
 import { getMyTransactions, Transaction } from "../api/transactions";
 import { getAllUsers, User, getUserById } from "../api/auth";
 import { Skeleton, SkeletonCircle } from "../components/Skeleton";
+import BottomNav from "../components/BottomNav";
 
 // Format numbers with commas and decimals
 const formatAmount = (amount: number, decimals: number = 3): string => {
@@ -347,6 +349,37 @@ export default function TransactionsPage() {
   const hasActiveFilters =
     selectedFilter || startDate || endDate || minAmount || maxAmount;
 
+  const quickActions = [
+    {
+      id: 1,
+      label: "Send",
+      icon: require("../assets/Send.png"),
+      route: "/transfer",
+      isImage: true,
+    },
+    {
+      id: 2,
+      label: "Receive",
+      icon: require("../assets/Receive.png"),
+      route: "/generate-link",
+      isImage: true,
+    },
+    {
+      id: 3,
+      label: "Deposit",
+      icon: require("../assets/Deposit.png"),
+      route: "/deposit",
+      isImage: true,
+    },
+    {
+      id: 4,
+      label: "Withdraw",
+      icon: require("../assets/Withdraw.png"),
+      route: "/withdraw",
+      isImage: true,
+    },
+  ];
+
   // Show loading while checking authentication
   if (!isAuthenticated) {
     return (
@@ -359,7 +392,7 @@ export default function TransactionsPage() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <StatusBar style="dark" />
       <View style={styles.header}>
         <TouchableOpacity
@@ -375,7 +408,41 @@ export default function TransactionsPage() {
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 80 }}
       >
+        {/* Quick Actions */}
+        <View style={styles.quickActionsContainer}>
+          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <View style={styles.quickActionsGrid}>
+            {quickActions.map((action) => (
+              <TouchableOpacity
+                key={action.id}
+                style={styles.quickActionButton}
+                onPress={() => {
+                  if (action.route) {
+                    router.push(action.route as any);
+                  }
+                }}
+              >
+                <View style={styles.quickActionIcon}>
+                  {action.isImage ? (
+                    <Image
+                      source={action.icon}
+                      style={styles.quickActionImage}
+                      resizeMode="contain"
+                    />
+                  ) : (
+                    <Text style={styles.quickActionIconText}>
+                      {action.icon}
+                    </Text>
+                  )}
+                </View>
+                <Text style={styles.quickActionLabel}>{action.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
         {/* Filter Buttons */}
         <View style={styles.filterContainer}>
           <TouchableOpacity
@@ -622,6 +689,7 @@ export default function TransactionsPage() {
           </View>
         )}
       </ScrollView>
+      <BottomNav />
     </SafeAreaView>
   );
 }
@@ -665,6 +733,53 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  quickActionsContainer: {
+    marginTop: 16,
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    color: "#111827",
+    fontWeight: "700",
+    marginBottom: 16,
+  },
+  quickActionsGrid: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    flexWrap: "wrap",
+  },
+  quickActionButton: {
+    width: "22%",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  quickActionIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
+    boxShadow: "0px 2px 4px 0px rgba(73, 57, 176, 0.2)",
+    elevation: 3,
+    borderWidth: 2,
+    borderColor: "#F3F4F6",
+  },
+  quickActionIconText: {
+    fontSize: 24,
+  },
+  quickActionImage: {
+    width: 75,
+    height: 75,
+  },
+  quickActionLabel: {
+    fontSize: 12,
+    color: "#6B7280",
+    fontWeight: "500",
+    textAlign: "center",
   },
   filterContainer: {
     flexDirection: "row",

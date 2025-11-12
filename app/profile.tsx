@@ -23,6 +23,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { router } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { Skeleton, SkeletonCircle, SkeletonText } from "../components/Skeleton";
+import BottomNav from "../components/BottomNav";
 
 const BASE_URL = "https://react-bank-project.eapi.joincoded.com";
 
@@ -183,7 +184,7 @@ export default function ProfilePage() {
 
   if (authLoading || isLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+      <SafeAreaView style={styles.container} edges={["top"]}>
         <StatusBar style="dark" />
         <ScrollView
           style={styles.scrollView}
@@ -247,7 +248,7 @@ export default function ProfilePage() {
 
   if (!isAuthenticated) {
     return (
-      <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+      <SafeAreaView style={styles.container} edges={["top"]}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#4939b0" />
         </View>
@@ -257,7 +258,7 @@ export default function ProfilePage() {
 
   if (error) {
     return (
-      <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+      <SafeAreaView style={styles.container} edges={["top"]}>
         <StatusBar style="dark" />
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Failed to load profile</Text>
@@ -283,7 +284,7 @@ export default function ProfilePage() {
       <StatusBar style="dark" />
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 80 }]}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
@@ -377,6 +378,7 @@ export default function ProfilePage() {
           </Text>
         </View>
       </ScrollView>
+      <BottomNav />
     </SafeAreaView>
   );
 }

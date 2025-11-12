@@ -23,6 +23,7 @@ import { Skeleton, SkeletonText, SkeletonCircle } from "../components/Skeleton";
 import { useGamification } from "../hooks/useGamification";
 import { GamificationSummaryCard } from "../components/GamificationSummaryCard";
 import { useSound } from "../hooks/useSound";
+import BottomNav from "../components/BottomNav";
 
 const BASE_URL = "https://react-bank-project.eapi.joincoded.com";
 
@@ -743,11 +744,12 @@ export default function HomePage() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <StatusBar style="dark" />
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 80 }}
       >
         <View style={styles.header}>
           <View>
@@ -1193,6 +1195,7 @@ export default function HomePage() {
           )}
         </View>
       </ScrollView>
+      <BottomNav />
     </SafeAreaView>
   );
 }

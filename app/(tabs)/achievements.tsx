@@ -15,6 +15,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { getMyTransactions, Transaction } from "../../api/transactions";
 import { getMyProfile, UserProfile } from "../../api/auth";
 import { useGamification, Achievement } from "../../hooks/useGamification";
+import BottomNav from "../../components/BottomNav";
 
 type AchievementFilter = "unlocked" | "locked" | null;
 
@@ -64,7 +65,7 @@ export default function AchievementsPage() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+      <SafeAreaView style={styles.container} edges={["top"]}>
         <StatusBar style="dark" />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#4939b0" />
@@ -74,11 +75,12 @@ export default function AchievementsPage() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <StatusBar style="dark" />
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 80 }}
       >
         <View style={styles.header}>
           <TouchableOpacity
@@ -220,6 +222,7 @@ export default function AchievementsPage() {
           </View>
         )}
       </ScrollView>
+      <BottomNav />
     </SafeAreaView>
   );
 }
