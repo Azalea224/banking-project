@@ -50,7 +50,15 @@ export default function WithdrawPage() {
   >({
     mutationFn: ({ amount: withdrawAmount }) =>
       withdraw({ amount: withdrawAmount }),
-    onSuccess: (data, variables) => {
+    onSuccess: async (data, variables) => {
+      // Immediately invalidate and refetch queries
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["myTransactions"] }),
+        queryClient.invalidateQueries({ queryKey: ["myProfile"] }),
+        queryClient.refetchQueries({ queryKey: ["myTransactions"] }),
+        queryClient.refetchQueries({ queryKey: ["myProfile"] }),
+      ]);
+      
       Alert.alert(
         "Success",
         `Withdrawal of ${variables.amount.toFixed(3)} KWD was successful!`,
@@ -58,9 +66,6 @@ export default function WithdrawPage() {
           {
             text: "OK",
             onPress: () => {
-              // Invalidate queries to refresh data
-              queryClient.invalidateQueries({ queryKey: ["myTransactions"] });
-              queryClient.invalidateQueries({ queryKey: ["myProfile"] });
               router.back();
             },
           },

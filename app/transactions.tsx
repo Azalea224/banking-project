@@ -38,6 +38,8 @@ export default function TransactionsPage() {
     queryKey: ["myTransactions"],
     queryFn: getMyTransactions,
     enabled: isAuthenticated,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const { data: allUsers, isLoading: usersLoading } = useQuery<User[]>({
@@ -131,6 +133,13 @@ export default function TransactionsPage() {
   const formattedTransactions = useMemo(() => {
     if (!transactions || transactions.length === 0) return [];
 
+    // Sort transactions by date (newest first)
+    const sortedTransactions = [...transactions].sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return dateB - dateA; // Descending order (newest first)
+    });
+
     // Create a map of user ID to username for quick lookup
     const userIdToUsernameMap = new Map<string | number, string>();
     if (allUsersWithMissing) {
@@ -143,7 +152,7 @@ export default function TransactionsPage() {
       });
     }
 
-    return transactions.map((transaction) => {
+    return sortedTransactions.map((transaction) => {
       // Helper function to get username from ID or return the value if it's already a username
       const getUsername = (
         value: string | number | undefined

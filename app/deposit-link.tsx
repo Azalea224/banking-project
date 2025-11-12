@@ -80,9 +80,18 @@ export default function DepositLinkPage() {
   >({
     mutationFn: ({ username: targetUsername, amount: transferAmount }) =>
       transfer(targetUsername, { amount: transferAmount }),
-    onSuccess: (data, variables) => {
+    onSuccess: async (data, variables) => {
       // Play send sound
       playSound("Send.mp3");
+      
+      // Immediately invalidate and refetch queries
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["myTransactions"] }),
+        queryClient.invalidateQueries({ queryKey: ["myProfile"] }),
+        queryClient.refetchQueries({ queryKey: ["myTransactions"] }),
+        queryClient.refetchQueries({ queryKey: ["myProfile"] }),
+      ]);
+      
       Alert.alert(
         "Success",
         `Transfer of ${variables.amount.toFixed(3)} KWD to ${
@@ -92,8 +101,6 @@ export default function DepositLinkPage() {
           {
             text: "OK",
             onPress: () => {
-              queryClient.invalidateQueries({ queryKey: ["myTransactions"] });
-              queryClient.invalidateQueries({ queryKey: ["myProfile"] });
               router.back();
             },
           },

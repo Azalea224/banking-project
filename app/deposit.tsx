@@ -45,9 +45,18 @@ export default function DepositPage() {
   >({
     mutationFn: ({ amount: depositAmount }) =>
       deposit({ amount: depositAmount }),
-    onSuccess: (data, variables) => {
+    onSuccess: async (data, variables) => {
       // Play deposit sound
       playSound("Deposit.mp3");
+      
+      // Immediately invalidate and refetch queries
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["myTransactions"] }),
+        queryClient.invalidateQueries({ queryKey: ["myProfile"] }),
+        queryClient.refetchQueries({ queryKey: ["myTransactions"] }),
+        queryClient.refetchQueries({ queryKey: ["myProfile"] }),
+      ]);
+      
       Alert.alert(
         "Success",
         `Deposit of ${variables.amount.toFixed(3)} KWD was successful!`,
@@ -55,9 +64,6 @@ export default function DepositPage() {
           {
             text: "OK",
             onPress: () => {
-              // Invalidate queries to refresh data
-              queryClient.invalidateQueries({ queryKey: ["myTransactions"] });
-              queryClient.invalidateQueries({ queryKey: ["myProfile"] });
               router.back();
             },
           },
