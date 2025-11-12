@@ -26,6 +26,19 @@ import { getMyProfile, UserProfile } from "../../api/auth";
 import { useGamification, Achievement } from "../../hooks/useGamification";
 import BottomNav from "../../components/BottomNav";
 import { AnimatedBackground, BRAND_COLOR_MAIN, BRAND_COLOR_SECONDARY, BRAND_COLOR_LIGHT_BG, BRAND_COLOR_DARK_BG } from "../../components/AnimatedBackground";
+import {
+  TOTAL_POINTS_ICON,
+  EXPERIENCE_ICON,
+  NEXT_LEVEL_TARGET_ICON,
+  MAX_LEVEL_ICON,
+  LOCK_ICON,
+  UNLOCKED_BADGE_ICON,
+  CLOSE_ICON,
+  CHECKMARK_ICON,
+  EMPTY_STATE_UNLOCKED_ICON,
+  EMPTY_STATE_LOCKED_ICON,
+} from "../../constants/imageAssets";
+import StableImage from "../../components/StableImage";
 
 type AchievementFilter = "unlocked" | "locked" | null;
 
@@ -152,8 +165,8 @@ export default function LevelPage() {
                   {/* Total Points Info */}
                   <View style={styles.totalPointsContainer}>
                     <View style={styles.totalPointsIconContainer}>
-                      <Image
-                        source={require("../../assets/Total Points.png")}
+                      <StableImage
+                        source={TOTAL_POINTS_ICON}
                         style={styles.totalPointsIcon}
                         resizeMode="contain"
                       />
@@ -173,8 +186,8 @@ export default function LevelPage() {
             <View style={styles.xpContainer}>
               <View style={styles.xpHeader}>
                 <View style={styles.xpIconContainer}>
-                  <Image
-                    source={require("../../assets/Experience.png")}
+                  <StableImage
+                    source={EXPERIENCE_ICON}
                     style={styles.xpIcon}
                     resizeMode="contain"
                   />
@@ -226,8 +239,8 @@ export default function LevelPage() {
               {/* Next Level Info */}
               <View style={styles.nextLevelContainer}>
                 <View style={styles.nextLevelIcon}>
-                  <Image
-                    source={require("../../assets/Next Level Target.png")}
+                  <StableImage
+                    source={NEXT_LEVEL_TARGET_ICON}
                     style={styles.nextLevelIconImage}
                     resizeMode="contain"
                   />
@@ -240,8 +253,8 @@ export default function LevelPage() {
                     </>
                   ) : (
                     <View style={styles.maxLevelContainer}>
-                      <Image
-                        source={require("../../assets/Max Level.png")}
+                      <StableImage
+                        source={MAX_LEVEL_ICON}
                         style={styles.maxLevelIcon}
                         resizeMode="contain"
                       />
@@ -319,11 +332,11 @@ export default function LevelPage() {
           {filteredAchievements.length === 0 ? (
             <View style={styles.emptyContainer}>
               {/* DESIGN FIX: Added an icon for a friendlier empty state */}
-              <Image
+              <StableImage
                 source={
                   filter === "unlocked"
-                    ? require("../../assets/Empty State (Unlocked).png")
-                    : require("../../assets/Empty State (Locked).png")
+                    ? EMPTY_STATE_UNLOCKED_ICON
+                    : EMPTY_STATE_LOCKED_ICON
                 }
                 style={styles.emptyIcon}
                 resizeMode="contain"
@@ -365,7 +378,7 @@ export default function LevelPage() {
                         {achievement.icon}
                       </Text>
                     ) : (
-                      <Image
+                      <StableImage
                         source={achievement.icon}
                         style={styles.achievementIconImage}
                         resizeMode="contain"
@@ -373,8 +386,8 @@ export default function LevelPage() {
                     )}
                     {!achievement.unlocked && (
                       <View style={styles.lockOverlay}>
-                        <Image
-                          source={require("../../assets/Lock.png")}
+                        <StableImage
+                          source={LOCK_ICON}
                           style={styles.lockIcon}
                           resizeMode="contain"
                         />
@@ -425,8 +438,8 @@ export default function LevelPage() {
                   </View>
                   {achievement.unlocked && (
                     <View style={styles.unlockedBadge}>
-                      <Image
-                        source={require("../../assets/Unlocked Badge.png")}
+                      <StableImage
+                        source={UNLOCKED_BADGE_ICON}
                         style={styles.unlockedBadgeImage}
                         resizeMode="contain"
                       />
@@ -457,7 +470,7 @@ export default function LevelPage() {
                       {selectedAchievement.icon}
                     </Text>
                   ) : (
-                    <Image
+                    <StableImage
                       source={selectedAchievement.icon}
                       style={styles.modalIconImage}
                       resizeMode="contain"
@@ -467,8 +480,8 @@ export default function LevelPage() {
                     style={styles.modalCloseButton}
                     onPress={() => setModalVisible(false)}
                   >
-                    <Image
-                      source={require("../../assets/Close.png")}
+                    <StableImage
+                      source={CLOSE_ICON}
                       style={styles.modalCloseImage}
                       resizeMode="contain"
                     />
@@ -509,8 +522,8 @@ export default function LevelPage() {
                 >
                   {selectedAchievement.unlocked ? (
                     <View style={styles.modalStatusUnlockedContainer}>
-                      <Image
-                        source={require("../../assets/Checkmark.png")}
+                      <StableImage
+                        source={CHECKMARK_ICON}
                         style={styles.modalCheckmark}
                         resizeMode="contain"
                       />
@@ -525,8 +538,8 @@ export default function LevelPage() {
                     </View>
                   ) : (
                     <View style={styles.modalStatusLockedContainer}>
-                      <Image
-                        source={require("../../assets/Lock.png")}
+                      <StableImage
+                        source={LOCK_ICON}
                         style={styles.modalLockIcon}
                         resizeMode="contain"
                       />

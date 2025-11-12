@@ -19,6 +19,8 @@ import * as ImagePicker from "expo-image-picker";
 import { useRegister } from "../hooks/useRegister";
 import { useAuth } from "../contexts/AuthContext";
 import { router } from "expo-router";
+import { CAMERA_ICON } from "../constants/imageAssets";
+import StableImage from "../components/StableImage";
 
 const registerValidationSchema = Yup.object().shape({
   username: Yup.string()
@@ -187,8 +189,8 @@ export default function RegisterPage() {
                   />
                 ) : (
                   <View style={styles.imagePlaceholder}>
-                    <Image
-                      source={require("../assets/Camera.png")}
+                    <StableImage
+                      source={CAMERA_ICON}
                       style={styles.imagePlaceholderIcon}
                       resizeMode="contain"
                     />

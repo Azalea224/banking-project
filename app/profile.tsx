@@ -25,6 +25,8 @@ import * as ImagePicker from "expo-image-picker";
 import { Skeleton, SkeletonCircle, SkeletonText } from "../components/Skeleton";
 import BottomNav from "../components/BottomNav";
 import { AnimatedBackground, BRAND_COLOR_MAIN, BRAND_COLOR_SECONDARY } from "../components/AnimatedBackground";
+import { CAMERA_ICON } from "../constants/imageAssets";
+import StableImage from "../components/StableImage";
 
 const BASE_URL = "https://react-bank-project.eapi.joincoded.com";
 
@@ -366,8 +368,8 @@ export default function ProfilePage() {
               </View>
             )}
             <View style={styles.editImageBadge}>
-              <Image
-                source={require("../assets/Camera.png")}
+              <StableImage
+                source={CAMERA_ICON}
                 style={styles.editImageIcon}
                 resizeMode="contain"
               />

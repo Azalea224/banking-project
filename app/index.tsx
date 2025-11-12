@@ -32,6 +32,15 @@ import { useSound } from "../hooks/useSound";
 import BottomNav from "../components/BottomNav";
 import { AnimatedBackground, BRAND_COLOR_MAIN, BRAND_COLOR_SECONDARY, BRAND_COLOR_LIGHT_BG, BRAND_COLOR_DARK_BG } from "../components/AnimatedBackground";
 import preloadImages from "../utils/imagePreloader";
+import {
+  SEND_ICON,
+  RECEIVE_ICON,
+  DEPOSIT_ICON,
+  WITHDRAW_ICON,
+  INCOME_TRANSACTION_ICON,
+  EXPENSE_TRANSACTION_ICON,
+} from "../constants/imageAssets";
+import StableImage from "../components/StableImage";
 
 const BASE_URL = "https://react-bank-project.eapi.joincoded.com";
 
@@ -617,34 +626,34 @@ export default function HomePage() {
   const accountBalance =
     profile?.balance !== undefined ? formatAmount(profile.balance) : "0.000";
 
-  // Stable quickActions array using useMemo to prevent recreation
+  // Stable quickActions array using useMemo with imported constants
   const quickActions = useMemo(
     () => [
       {
         id: 1,
         label: "Send",
-        icon: require("../assets/Send.png"),
+        icon: SEND_ICON,
         route: "/transfer",
         isImage: true,
       },
       {
         id: 2,
         label: "Receive",
-        icon: require("../assets/Receive.png"),
+        icon: RECEIVE_ICON,
         route: "/generate-link",
         isImage: true,
       },
       {
         id: 3,
         label: "Deposit",
-        icon: require("../assets/Deposit.png"),
+        icon: DEPOSIT_ICON,
         route: "/deposit",
         isImage: true,
       },
       {
         id: 4,
         label: "Withdraw",
-        icon: require("../assets/Withdraw.png"),
+        icon: WITHDRAW_ICON,
         route: "/withdraw",
         isImage: true,
       },
@@ -782,7 +791,7 @@ export default function HomePage() {
                                 {achievement.icon}
                               </Text>
                             ) : (
-                              <Image
+                              <StableImage
                                 source={achievement.icon}
                                 style={styles.recentAchievementIconImage}
                                 resizeMode="contain"
@@ -812,7 +821,7 @@ export default function HomePage() {
                 }}
               >
                 {action.isImage ? (
-                  <Image
+                  <StableImage
                     source={action.icon}
                     style={styles.quickActionImage}
                     resizeMode="contain"
@@ -895,11 +904,11 @@ export default function HomePage() {
                     }}
                   >
                     <View style={styles.transactionIcon}>
-                      <Image
+                      <StableImage
                         source={
                           transaction.type === "income"
-                            ? require("../assets/Income Transaction.png")
-                            : require("../assets/Expense Transaction.png")
+                            ? INCOME_TRANSACTION_ICON
+                            : EXPENSE_TRANSACTION_ICON
                         }
                         style={styles.transactionIconImage}
                         resizeMode="contain"

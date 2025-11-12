@@ -23,6 +23,12 @@ import { useAuth } from "../contexts/AuthContext";
 import { router, useLocalSearchParams } from "expo-router";
 import { useSound } from "../hooks/useSound";
 import { AnimatedBackground, BRAND_COLOR_MAIN } from "../components/AnimatedBackground";
+import {
+  EMPTY_STATE_UNLOCKED_ICON,
+  CHECKMARK_ICON,
+  SEARCH_ICON,
+} from "../constants/imageAssets";
+import StableImage from "../components/StableImage";
 
 const transferValidationSchema = Yup.object().shape({
   amount: Yup.string()
@@ -267,8 +273,8 @@ export default function TransferPage() {
                     </View>
                   ) : filteredUsers.length === 0 ? (
                     <View style={styles.emptyContainer}>
-                      <Image
-                        source={require("../assets/Empty State (Unlocked).png")}
+                      <StableImage
+                        source={EMPTY_STATE_UNLOCKED_ICON}
                         style={styles.emptyIcon}
                         resizeMode="contain"
                       />
@@ -339,8 +345,8 @@ export default function TransferPage() {
                           </View>
                             {isSelected && (
                               <View style={styles.checkmarkContainer}>
-                                <Image
-                                  source={require("../assets/Checkmark.png")}
+                                <StableImage
+                                  source={CHECKMARK_ICON}
                                   style={styles.checkmark}
                                   resizeMode="contain"
                                 />
@@ -359,8 +365,8 @@ export default function TransferPage() {
                 {/* Search Bar */}
                 <View style={styles.searchCard}>
                   <View style={styles.searchContainer}>
-                    <Image
-                      source={require("../assets/Search.png")}
+                    <StableImage
+                      source={SEARCH_ICON}
                       style={styles.searchIcon}
                       resizeMode="contain"
                     />

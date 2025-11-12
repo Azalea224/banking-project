@@ -9,7 +9,7 @@ export const BRAND_COLOR_DARK_BG = "rgba(38, 51, 103, 0.1)"; // Secondary color 
 
 const { width, height } = Dimensions.get("window");
 
-export const AnimatedBackground = () => {
+const AnimatedBackgroundComponent = () => {
   const anim1 = useRef(new Animated.Value(0)).current;
   const anim2 = useRef(new Animated.Value(0)).current;
   const anim3 = useRef(new Animated.Value(0)).current;
@@ -110,6 +110,8 @@ export const AnimatedBackground = () => {
     </View>
   );
 };
+
+export const AnimatedBackground = React.memo(AnimatedBackgroundComponent);
 
 const styles = StyleSheet.create({
   animatedBgContainer: {

@@ -20,6 +20,16 @@ import { getAllUsers, User, getUserById } from "../api/auth";
 import { Skeleton, SkeletonCircle } from "../components/Skeleton";
 import BottomNav from "../components/BottomNav";
 import { AnimatedBackground, BRAND_COLOR_MAIN } from "../components/AnimatedBackground";
+import {
+  SEND_ICON,
+  RECEIVE_ICON,
+  DEPOSIT_ICON,
+  WITHDRAW_ICON,
+  INCOME_TRANSACTION_ICON,
+  EXPENSE_TRANSACTION_ICON,
+} from "../constants/imageAssets";
+import StableImage from "../components/StableImage";
+import DatePickerModal from "../components/DatePickerModal";
 
 // Format numbers with commas and decimals
 const formatAmount = (amount: number, decimals: number = 3): string => {
@@ -41,6 +51,10 @@ export default function TransactionsPage() {
   const [endDate, setEndDate] = useState<string>("");
   const [minAmount, setMinAmount] = useState<string>("");
   const [maxAmount, setMaxAmount] = useState<string>("");
+  
+  // Date picker modal states
+  const [showStartDatePicker, setShowStartDatePicker] = useState(false);
+  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
 
   const {
     data: transactions,
@@ -347,38 +361,59 @@ export default function TransactionsPage() {
     setMaxAmount("");
   };
 
+  // Format date for display (e.g., "Jan 15, 2024")
+  const formatDateForDisplay = (dateString: string): string => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  // Handle date selection from calendar
+  const handleStartDateSelect = (date: string) => {
+    setStartDate(date);
+    setShowStartDatePicker(false);
+  };
+
+  const handleEndDateSelect = (date: string) => {
+    setEndDate(date);
+    setShowEndDatePicker(false);
+  };
+
   // Check if any filters are active
   const hasActiveFilters =
     selectedFilter || startDate || endDate || minAmount || maxAmount;
 
-  // Stable quickActions array using useMemo to prevent recreation
+  // Stable quickActions array using useMemo with imported constants
   const quickActions = useMemo(
     () => [
       {
         id: 1,
         label: "Send",
-        icon: require("../assets/Send.png"),
+        icon: SEND_ICON,
         route: "/transfer",
         isImage: true,
       },
       {
         id: 2,
         label: "Receive",
-        icon: require("../assets/Receive.png"),
+        icon: RECEIVE_ICON,
         route: "/generate-link",
         isImage: true,
       },
       {
         id: 3,
         label: "Deposit",
-        icon: require("../assets/Deposit.png"),
+        icon: DEPOSIT_ICON,
         route: "/deposit",
         isImage: true,
       },
       {
         id: 4,
         label: "Withdraw",
-        icon: require("../assets/Withdraw.png"),
+        icon: WITHDRAW_ICON,
         route: "/withdraw",
         isImage: true,
       },
@@ -534,25 +569,39 @@ export default function TransactionsPage() {
                     style={[styles.dateInputContainer, { marginRight: 6 }]}
                   >
                     <Text style={styles.dateInputLabel}>From</Text>
-                    <TextInput
-                      style={styles.dateInput}
-                      placeholder="YYYY-MM-DD"
-                      value={startDate}
-                      onChangeText={setStartDate}
-                      placeholderTextColor="#9CA3AF"
-                    />
+                    <TouchableOpacity
+                      style={styles.dateInputButton}
+                      onPress={() => setShowStartDatePicker(true)}
+                    >
+                      <Text
+                        style={[
+                          styles.dateInputButtonText,
+                          !startDate && styles.dateInputButtonPlaceholder,
+                        ]}
+                      >
+                        {startDate
+                          ? formatDateForDisplay(startDate)
+                          : "Select date"}
+                      </Text>
+                    </TouchableOpacity>
                   </View>
                   <View
                     style={[styles.dateInputContainer, { marginLeft: 6 }]}
                   >
                     <Text style={styles.dateInputLabel}>To</Text>
-                    <TextInput
-                      style={styles.dateInput}
-                      placeholder="YYYY-MM-DD"
-                      value={endDate}
-                      onChangeText={setEndDate}
-                      placeholderTextColor="#9CA3AF"
-                    />
+                    <TouchableOpacity
+                      style={styles.dateInputButton}
+                      onPress={() => setShowEndDatePicker(true)}
+                    >
+                      <Text
+                        style={[
+                          styles.dateInputButtonText,
+                          !endDate && styles.dateInputButtonPlaceholder,
+                        ]}
+                      >
+                        {endDate ? formatDateForDisplay(endDate) : "Select date"}
+                      </Text>
+                    </TouchableOpacity>
                   </View>
                 </View>
               </View>
@@ -658,11 +707,11 @@ export default function TransactionsPage() {
                   }}
                 >
                     <View style={styles.transactionIcon}>
-                      <Image
+                      <StableImage
                         source={
                           transaction.type === "income"
-                            ? require("../assets/Income Transaction.png")
-                            : require("../assets/Expense Transaction.png")
+                            ? INCOME_TRANSACTION_ICON
+                            : EXPENSE_TRANSACTION_ICON
                         }
                         style={styles.transactionIconImage}
                         resizeMode="contain"
@@ -692,6 +741,23 @@ export default function TransactionsPage() {
           </View>
         )}
       </ScrollView>
+      
+      {/* Date Picker Modals */}
+      <DatePickerModal
+        visible={showStartDatePicker}
+        onClose={() => setShowStartDatePicker(false)}
+        onSelectDate={handleStartDateSelect}
+        selectedDate={startDate}
+        title="Select Start Date"
+      />
+      <DatePickerModal
+        visible={showEndDatePicker}
+        onClose={() => setShowEndDatePicker(false)}
+        onSelectDate={handleEndDateSelect}
+        selectedDate={endDate}
+        title="Select End Date"
+      />
+      
       <BottomNav />
     </SafeAreaView>
   );
@@ -927,6 +993,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#111827",
     backgroundColor: "#FFFFFF",
+  },
+  dateInputButton: {
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    borderRadius: 8,
+    padding: 10,
+    backgroundColor: "#FFFFFF",
+    minHeight: 44,
+    justifyContent: "center",
+  },
+  dateInputButtonText: {
+    fontSize: 14,
+    color: "#111827",
+    fontWeight: "500",
+  },
+  dateInputButtonPlaceholder: {
+    color: "#9CA3AF",
+    fontWeight: "400",
   },
   amountInputRow: {
     flexDirection: "row",

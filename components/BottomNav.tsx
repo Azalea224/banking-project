@@ -1,9 +1,17 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Image, Platform } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from "react-native";
 import { useSegments, useRouter, usePathname } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../contexts/AuthContext";
 import { BRAND_COLOR_MAIN } from "./AnimatedBackground";
+import {
+  HOME_ICON,
+  PROGRESS_ICON,
+  TRANSACTIONS_ICON,
+  FRIENDS_ICON,
+  PROFILE_ICON,
+} from "../constants/imageAssets";
+import StableImage from "./StableImage";
 
 interface NavItem {
   id: string;
@@ -19,40 +27,40 @@ const navItems: NavItem[] = [
     id: "home",
     label: "Home",
     route: "/",
-    icon: require("../assets/home.png"),
+    icon: HOME_ICON,
     isImage: true,
   },
   {
     id: "level",
     label: "Progress",
     route: "/level",
-    icon: require("../assets/Progress.png"),
+    icon: PROGRESS_ICON,
     isImage: true,
   },
   {
     id: "transactions",
     label: "Transactions",
     route: "/transactions",
-    icon: require("../assets/Transactions.png"),
+    icon: TRANSACTIONS_ICON,
     isImage: true,
   },
   {
     id: "friends",
     label: "Friends",
     route: "/friends",
-    icon: require("../assets/Friends.png"),
+    icon: FRIENDS_ICON,
     isImage: true,
   },
   {
     id: "profile",
     label: "Profile",
     route: "/profile",
-    icon: require("../assets/Profile.png"),
+    icon: PROFILE_ICON,
     isImage: true,
   },
 ];
 
-export default function BottomNav() {
+function BottomNav() {
   const segments = useSegments();
   const pathname = usePathname();
   const router = useRouter();
@@ -113,7 +121,7 @@ export default function BottomNav() {
             <View style={styles.navItemContent}>
               <View style={styles.iconContainer}>
                 {item.isImage ? (
-                  <Image
+                  <StableImage
                     source={item.icon}
                     style={[
                       styles.iconImage,
@@ -137,6 +145,8 @@ export default function BottomNav() {
     </View>
   );
 }
+
+export default React.memo(BottomNav);
 
 const styles = StyleSheet.create({
   container: {

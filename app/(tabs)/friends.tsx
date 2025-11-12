@@ -21,6 +21,8 @@ import BottomNav from "../../components/BottomNav";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { AnimatedBackground, BRAND_COLOR_MAIN } from "../../components/AnimatedBackground";
+import { CLOSE_ICON } from "../../constants/imageAssets";
+import StableImage from "../../components/StableImage";
 
 const BASE_URL = "https://react-bank-project.eapi.joincoded.com";
 const FRIENDS_STORAGE_KEY = "@friends_list";
@@ -260,8 +262,8 @@ export default function FriendsPage() {
                     style={styles.removeButton}
                     onPress={() => handleRemoveFriend(friend)}
                   >
-                    <Image
-                      source={require("../../assets/Close.png")}
+                    <StableImage
+                      source={CLOSE_ICON}
                       style={styles.removeButtonImage}
                       resizeMode="contain"
                     />
