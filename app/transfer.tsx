@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -7,11 +7,11 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
-  FlatList,
   Image,
   Keyboard,
+  ScrollView,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { Formik } from "formik";
 import * as Yup from "yup";
@@ -37,16 +37,14 @@ const transferValidationSchema = Yup.object().shape({
 
 const BASE_URL = "https://react-bank-project.eapi.joincoded.com";
 
+const QUICK_AMOUNTS = [10, 25, 50, 100, 250, 500];
+
 export default function TransferPage() {
   const { username, isAuthenticated, token } = useAuth();
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const queryClient = useQueryClient();
-  const flatListRef = useRef<FlatList>(null);
-
-  const scrollToBottom = () => {
-    flatListRef.current?.scrollToEnd({ animated: true });
-  };
+  const insets = useSafeAreaInsets();
 
   const {
     data: users,
@@ -186,185 +184,275 @@ export default function TransferPage() {
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <StatusBar style="dark" />
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
+      <View style={styles.mainContainer}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.backButtonIcon}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.title}>Send Money</Text>
+          <View style={styles.placeholder} />
+        </View>
+
+        <Formik
+          initialValues={{ amount: "" }}
+          validationSchema={transferValidationSchema}
+          onSubmit={handleTransfer}
         >
-          <Text style={styles.backButtonIcon}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.title}>Send Money</Text>
-        <View style={styles.placeholder} />
-      </View>
-
-      <Formik
-        initialValues={{ amount: "" }}
-        validationSchema={transferValidationSchema}
-        onSubmit={handleTransfer}
-      >
-        {({
-          handleChange,
-          handleBlur,
-          handleSubmit,
-          setFieldValue,
-          values,
-          errors,
-          touched,
-        }) => (
-          <>
-            <View style={styles.formSection}>
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>Amount</Text>
-                <TextInput
-                  style={[
-                    styles.input,
-                    errors.amount && touched.amount && styles.inputError,
-                  ]}
-                  placeholder="Enter amount"
-                  placeholderTextColor="#9CA3AF"
-                  value={values.amount}
-                  onChangeText={(text) =>
-                    handleAmountChange(text, setFieldValue)
-                  }
-                  onBlur={handleBlur("amount")}
-                  keyboardType="decimal-pad"
-                  returnKeyType="done"
-                  blurOnSubmit={true}
-                  onSubmitEditing={Keyboard.dismiss}
-                />
-                {errors.amount && touched.amount && (
-                  <Text style={styles.errorText}>{errors.amount}</Text>
-                )}
-              </View>
-
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>Search Users</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Search by username"
-                  placeholderTextColor="#9CA3AF"
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                  autoCapitalize="none"
-                  returnKeyType="search"
-                  blurOnSubmit={true}
-                  onSubmitEditing={Keyboard.dismiss}
-                />
-              </View>
-            </View>
-
-            <View style={styles.usersSection}>
-              <Text style={styles.sectionTitle}>Select Recipient</Text>
-              {usersLoading ? (
-                <View style={styles.loadingContainer}>
-                  <ActivityIndicator size="small" color="#4939b0" />
-                  <Text style={styles.loadingText}>Loading users...</Text>
+          {({
+            handleChange,
+            handleBlur,
+            handleSubmit,
+            setFieldValue,
+            values,
+            errors,
+            touched,
+          }) => (
+            <>
+              {/* Recipient Card - Scrollable Users List */}
+              <ScrollView
+                style={styles.recipientScrollView}
+                contentContainerStyle={styles.recipientScrollContent}
+                showsVerticalScrollIndicator={true}
+                keyboardShouldPersistTaps="handled"
+              >
+                <View style={styles.recipientCard}>
+                  <Text style={styles.cardTitle}>Select Recipient</Text>
+                  {usersLoading ? (
+                    <View style={styles.loadingContainer}>
+                      <ActivityIndicator size="small" color="#4939b0" />
+                      <Text style={styles.loadingText}>Loading users...</Text>
+                    </View>
+                  ) : usersError ? (
+                    <View style={styles.errorContainer}>
+                      <Text style={styles.errorText}>Failed to load users</Text>
+                    </View>
+                  ) : filteredUsers.length === 0 ? (
+                    <View style={styles.emptyContainer}>
+                      <Text style={styles.emptyIcon}>👤</Text>
+                      <Text style={styles.emptyText}>
+                        {searchQuery
+                          ? "No users found"
+                          : "No users available"}
+                      </Text>
+                    </View>
+                  ) : (
+                    <View style={styles.usersListContainer}>
+                      {filteredUsers.map((item, index) => {
+                        const isSelected =
+                          selectedUser !== null &&
+                          item.id !== undefined &&
+                          item.username !== undefined &&
+                          selectedUser.id === item.id;
+                        return (
+                          <TouchableOpacity
+                            key={item.id?.toString() || item.username || `user-${index}`}
+                            style={[
+                              styles.userItem,
+                              isSelected && styles.userItemSelected,
+                            ]}
+                            onPress={() => setSelectedUser(item)}
+                            activeOpacity={0.7}
+                          >
+                            {item.image ? (
+                              <Image
+                                source={{
+                                  uri: item.image.startsWith("http")
+                                    ? item.image
+                                    : `${BASE_URL}${
+                                        item.image.startsWith("/") ? "" : "/"
+                                      }${item.image}`,
+                                }}
+                                style={styles.userImage}
+                              />
+                            ) : (
+                              <View style={styles.userImagePlaceholder}>
+                                <Text style={styles.userImagePlaceholderText}>
+                                  {item.username?.charAt(0).toUpperCase() || "U"}
+                                </Text>
+                              </View>
+                            )}
+                          <View style={styles.userInfo}>
+                            <Text style={[
+                              styles.userName,
+                              isSelected && styles.userNameSelected,
+                            ]}>
+                              {item.username || "Unknown User"}
+                            </Text>
+                          </View>
+                            {isSelected && (
+                              <View style={styles.checkmarkContainer}>
+                                <Text style={styles.checkmark}>✓</Text>
+                              </View>
+                            )}
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  )}
                 </View>
-              ) : usersError ? (
-                <View style={styles.errorContainer}>
-                  <Text style={styles.errorText}>Failed to load users</Text>
-                </View>
-              ) : filteredUsers.length === 0 ? (
-                <View style={styles.emptyContainer}>
-                  <Text style={styles.emptyText}>
-                    {searchQuery ? "No users found" : "No users available"}
-                  </Text>
-                </View>
-              ) : (
-                <FlatList
-                  ref={flatListRef}
-                  data={filteredUsers}
-                  keyExtractor={(item, index) =>
-                    item.id?.toString() || item.username || `user-${index}`
-                  }
-                  scrollEnabled={true}
-                  style={styles.userList}
-                  contentContainerStyle={styles.userListContent}
-                  showsVerticalScrollIndicator={true}
-                  renderItem={({ item }) => {
-                    const isSelected =
-                      selectedUser !== null &&
-                      item.id !== undefined &&
-                      item.username !== undefined &&
-                      selectedUser.id === item.id;
-                    return (
+              </ScrollView>
+
+              {/* Bottom Form Section - Sticky at Bottom */}
+              <View style={[styles.bottomFormSection, { paddingBottom: Math.max(insets.bottom, 20) }]}>
+                {/* Search Bar */}
+                <View style={styles.searchCard}>
+                  <View style={styles.searchContainer}>
+                    <Text style={styles.searchIcon}>🔍</Text>
+                    <TextInput
+                      style={styles.searchInput}
+                      placeholder="Search by username"
+                      placeholderTextColor="#9CA3AF"
+                      value={searchQuery}
+                      onChangeText={setSearchQuery}
+                      autoCapitalize="none"
+                      returnKeyType="search"
+                      blurOnSubmit={true}
+                      onSubmitEditing={Keyboard.dismiss}
+                    />
+                    {searchQuery.length > 0 && (
                       <TouchableOpacity
-                        style={[
-                          styles.userItem,
-                          isSelected && styles.userItemSelected,
-                        ]}
-                        onPress={() => setSelectedUser(item)}
+                        onPress={() => setSearchQuery("")}
+                        style={styles.clearButton}
                       >
-                        {item.image ? (
+                        <Text style={styles.clearButtonText}>✕</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </View>
+
+                {/* Amount Card */}
+                <View style={styles.amountCard}>
+                  <Text style={styles.cardTitle}>Amount</Text>
+                  <View style={styles.amountInputContainer}>
+                    <Text style={styles.currencySymbol}>KWD</Text>
+                    <TextInput
+                      style={[
+                        styles.amountInput,
+                        errors.amount && touched.amount && styles.inputError,
+                      ]}
+                      placeholder="0.000"
+                      placeholderTextColor="#9CA3AF"
+                      value={values.amount}
+                      onChangeText={(text) =>
+                        handleAmountChange(text, setFieldValue)
+                      }
+                      onBlur={handleBlur("amount")}
+                      keyboardType="decimal-pad"
+                      returnKeyType="done"
+                      blurOnSubmit={true}
+                      onSubmitEditing={Keyboard.dismiss}
+                    />
+                  </View>
+                  {errors.amount && touched.amount && (
+                    <Text style={styles.errorText}>{errors.amount}</Text>
+                  )}
+                  
+                  {/* Quick Amount Buttons */}
+                  <View style={styles.quickAmountsContainer}>
+                    <Text style={styles.quickAmountsLabel}>Quick select</Text>
+                    <View style={styles.quickAmountsRow}>
+                      {QUICK_AMOUNTS.map((amount) => (
+                        <TouchableOpacity
+                          key={amount}
+                          style={[
+                            styles.quickAmountButton,
+                            values.amount === amount.toString() &&
+                              styles.quickAmountButtonActive,
+                          ]}
+                          onPress={() => setFieldValue("amount", amount.toString())}
+                        >
+                          <Text
+                            style={[
+                              styles.quickAmountText,
+                              values.amount === amount.toString() &&
+                                styles.quickAmountTextActive,
+                            ]}
+                          >
+                            {amount}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                </View>
+
+                {/* Summary Card */}
+                {selectedUser && values.amount && (
+                  <View style={styles.summaryCard}>
+                    <View style={styles.summaryRow}>
+                      <Text style={styles.summaryLabel}>Sending to</Text>
+                      <View style={styles.summaryUserInfo}>
+                        {selectedUser.image ? (
                           <Image
                             source={{
-                              uri: item.image.startsWith("http")
-                                ? item.image
+                              uri: selectedUser.image.startsWith("http")
+                                ? selectedUser.image
                                 : `${BASE_URL}${
-                                    item.image.startsWith("/") ? "" : "/"
-                                  }${item.image}`,
+                                    selectedUser.image.startsWith("/") ? "" : "/"
+                                  }${selectedUser.image}`,
                             }}
-                            style={styles.userImage}
+                            style={styles.summaryUserImage}
                           />
                         ) : (
-                          <View style={styles.userImagePlaceholder}>
-                            <Text style={styles.userImagePlaceholderText}>
-                              {item.username?.charAt(0).toUpperCase() || "U"}
+                          <View style={styles.summaryUserImagePlaceholder}>
+                            <Text style={styles.summaryUserImagePlaceholderText}>
+                              {selectedUser.username?.charAt(0).toUpperCase() ||
+                                "U"}
                             </Text>
                           </View>
                         )}
-                        <Text style={styles.userName}>
-                          {item.username || "Unknown User"}
+                        <Text style={styles.summaryUserName}>
+                          {selectedUser.username}
                         </Text>
-                        {isSelected && <Text style={styles.checkmark}>✓</Text>}
-                      </TouchableOpacity>
-                    );
-                  }}
-                />
-              )}
-            </View>
-
-            <View style={styles.bottomSection}>
-              {selectedUser && (
-                <View style={styles.selectedUserInfo}>
-                  <Text style={styles.selectedUserLabel}>Sending to:</Text>
-                  <Text style={styles.selectedUserName}>
-                    {selectedUser.username}
-                  </Text>
-                </View>
-              )}
-
-              <TouchableOpacity
-                style={[
-                  styles.transferButton,
-                  (!selectedUser ||
-                    !values.amount ||
-                    transferMutation.isPending) &&
-                    styles.transferButtonDisabled,
-                ]}
-                onPress={() => handleSubmit()}
-                disabled={
-                  !selectedUser || !values.amount || transferMutation.isPending
-                }
-              >
-                {transferMutation.isPending ? (
-                  <ActivityIndicator color="#FFFFFF" />
-                ) : (
-                  <Text style={styles.transferButtonText}>Send Money</Text>
+                      </View>
+                    </View>
+                    <View style={styles.summaryDivider} />
+                    <View style={styles.summaryRow}>
+                      <Text style={styles.summaryLabel}>Amount</Text>
+                      <Text style={styles.summaryAmount}>
+                        {parseFloat(values.amount || "0").toFixed(3)} KWD
+                      </Text>
+                    </View>
+                  </View>
                 )}
-              </TouchableOpacity>
-            </View>
-          </>
-        )}
-      </Formik>
 
-      <TouchableOpacity
-        style={styles.floatingButton}
-        onPress={scrollToBottom}
-        activeOpacity={0.8}
-      >
-        <Text style={styles.floatingButtonText}>↓</Text>
-      </TouchableOpacity>
+                {/* Send Button */}
+                <TouchableOpacity
+                  style={[
+                    styles.transferButton,
+                    (!selectedUser ||
+                      !values.amount ||
+                      transferMutation.isPending) &&
+                      styles.transferButtonDisabled,
+                  ]}
+                  onPress={() => handleSubmit()}
+                  disabled={
+                    !selectedUser || !values.amount || transferMutation.isPending
+                  }
+                  activeOpacity={0.8}
+                >
+                  {transferMutation.isPending ? (
+                    <ActivityIndicator color="#FFFFFF" />
+                  ) : (
+                    <>
+                      <Text style={styles.transferButtonText}>Send Money</Text>
+                      {selectedUser && values.amount && (
+                        <Text style={styles.transferButtonSubtext}>
+                          {parseFloat(values.amount).toFixed(3)} KWD to{" "}
+                          {selectedUser.username}
+                        </Text>
+                      )}
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+        </Formik>
+      </View>
     </SafeAreaView>
   );
 }
@@ -373,7 +461,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F5F7FA",
-    flexDirection: "column",
+  },
+  mainContainer: {
+    flex: 1,
+  },
+  recipientScrollView: {
+    flex: 1,
+  },
+  recipientScrollContent: {
+    paddingBottom: 300,
   },
   header: {
     flexDirection: "row",
@@ -381,49 +477,66 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 20,
     paddingTop: 20,
-    paddingBottom: 10,
+    paddingBottom: 16,
   },
   backButton: {
     width: 40,
     height: 40,
     justifyContent: "center",
     alignItems: "center",
+    borderRadius: 20,
+    backgroundColor: "#FFFFFF",
   },
   backButtonIcon: {
-    fontSize: 24,
+    fontSize: 20,
     color: "#111827",
     fontWeight: "600",
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: "700",
     color: "#111827",
   },
   placeholder: {
     width: 40,
   },
-  formSection: {
-    paddingHorizontal: 20,
-    marginTop: 20,
-  },
-  inputContainer: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#374151",
-    marginBottom: 8,
-  },
-  input: {
+  amountCard: {
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
+    padding: 12,
+    marginBottom: 10,
+    boxShadow: "0px 2px 8px 0px rgba(0, 0, 0, 0.08)",
+    elevation: 3,
+  },
+  cardTitle: {
+    fontSize: 14,
+    fontWeight: "700",
     color: "#111827",
-    borderWidth: 1,
+    marginBottom: 8,
+  },
+  amountInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F9FAFB",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 2,
+    borderWidth: 2,
     borderColor: "#E5E7EB",
+    marginBottom: 6,
+  },
+  currencySymbol: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#6B7280",
+    marginRight: 8,
+  },
+  amountInput: {
+    flex: 1,
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#111827",
+    paddingVertical: 6,
   },
   inputError: {
     borderColor: "#EF4444",
@@ -432,115 +545,250 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#EF4444",
     marginTop: 4,
+    marginLeft: 4,
   },
-  usersSection: {
+  quickAmountsContainer: {
+    marginTop: 8,
+  },
+  quickAmountsLabel: {
+    fontSize: 10,
+    color: "#6B7280",
+    fontWeight: "500",
+    marginBottom: 6,
+  },
+  quickAmountsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 5,
+  },
+  quickAmountButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    backgroundColor: "#F3F4F6",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  quickAmountButtonActive: {
+    backgroundColor: "#4939b0",
+    borderColor: "#4939b0",
+  },
+  quickAmountText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#6B7280",
+  },
+  quickAmountTextActive: {
+    color: "#FFFFFF",
+  },
+  recipientCard: {
+    backgroundColor: "#FFFFFF",
+    marginHorizontal: 20,
+    marginTop: 8,
+    marginBottom: 8,
+    borderRadius: 20,
+    padding: 24,
+    boxShadow: "0px 2px 8px 0px rgba(0, 0, 0, 0.08)",
+    elevation: 3,
+  },
+  usersListContainer: {
+    paddingTop: 8,
+  },
+  bottomFormSection: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
     paddingHorizontal: 20,
-    marginTop: 8,
+    paddingTop: 12,
+    paddingBottom: 40,
+    backgroundColor: "#F5F7FA",
+    borderTopWidth: 1,
+    borderTopColor: "#E5E7EB",
+    boxShadow: "0px -2px 8px 0px rgba(0, 0, 0, 0.1)",
+    elevation: 8,
+  },
+  searchCard: {
+    marginBottom: 12,
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    boxShadow: "0px 1px 3px 0px rgba(0, 0, 0, 0.1)",
+    elevation: 2,
+  },
+  searchIcon: {
+    fontSize: 18,
+    marginRight: 12,
+  },
+  searchInput: {
     flex: 1,
-  },
-  userList: {
-    maxHeight: 300,
-  },
-  userListContent: {
-    paddingBottom: 8,
-  },
-  sectionTitle: {
-    fontSize: 20,
+    fontSize: 16,
     color: "#111827",
-    fontWeight: "700",
-    marginBottom: 16,
+    paddingVertical: 14,
   },
-  loadingContainer: {
-    padding: 20,
+  clearButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "#E5E7EB",
+    justifyContent: "center",
     alignItems: "center",
+    marginLeft: 8,
   },
-  loadingText: {
-    marginTop: 8,
-    fontSize: 14,
+  clearButtonText: {
+    fontSize: 12,
     color: "#6B7280",
+    fontWeight: "600",
   },
-  errorContainer: {
-    padding: 20,
-    alignItems: "center",
-  },
-  errorText: {
-    fontSize: 14,
-    color: "#EF4444",
-  },
-  emptyContainer: {
-    padding: 20,
-    alignItems: "center",
-  },
-  emptyText: {
-    fontSize: 14,
-    color: "#6B7280",
+  usersListContainer: {
+    marginTop: 16,
   },
   userItem: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "transparent",
+    backgroundColor: "#F9FAFB",
     borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
+    padding: 12,
+    marginBottom: 8,
+    borderWidth: 2,
     borderColor: "transparent",
   },
   userItemSelected: {
-    borderWidth: 2,
     borderColor: "#4939b0",
-    backgroundColor: "#EFF6FF",
-    boxShadow: "0px 2px 4px 0px rgba(30, 64, 175, 0.2)",
+    backgroundColor: "#4939b0",
+    boxShadow: "0px 2px 4px 0px rgba(73, 57, 176, 0.3)",
     elevation: 3,
   },
   userImage: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    marginRight: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    marginRight: 10,
   },
   userImagePlaceholder: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: "#4939b0",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 12,
+    marginRight: 10,
   },
   userImagePlaceholderText: {
     fontSize: 20,
     color: "#FFFFFF",
     fontWeight: "700",
   },
-  userName: {
+  userInfo: {
     flex: 1,
+  },
+  userName: {
+    fontSize: 14,
+    color: "#111827",
+    fontWeight: "600",
+  },
+  userNameSelected: {
+    color: "#FFFFFF",
+  },
+  checkmarkContainer: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "#4939b0",
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: 8,
+  },
+  checkmark: {
+    fontSize: 14,
+    color: "#FFFFFF",
+    fontWeight: "700",
+  },
+  loadingContainer: {
+    padding: 40,
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: "#6B7280",
+  },
+  errorContainer: {
+    padding: 40,
+    alignItems: "center",
+  },
+  emptyContainer: {
+    padding: 40,
+    alignItems: "center",
+  },
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: 12,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: "#6B7280",
+    textAlign: "center",
+  },
+  summaryCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 10,
+    boxShadow: "0px 2px 8px 0px rgba(0, 0, 0, 0.08)",
+    elevation: 3,
+  },
+  summaryRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  summaryLabel: {
+    fontSize: 14,
+    color: "#6B7280",
+    fontWeight: "500",
+  },
+  summaryUserInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  summaryUserImage: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    marginRight: 8,
+  },
+  summaryUserImagePlaceholder: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#4939b0",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 8,
+  },
+  summaryUserImagePlaceholderText: {
+    fontSize: 14,
+    color: "#FFFFFF",
+    fontWeight: "700",
+  },
+  summaryUserName: {
     fontSize: 16,
     color: "#111827",
     fontWeight: "600",
   },
-  checkmark: {
-    fontSize: 20,
-    color: "#4939b0",
-    fontWeight: "700",
-    marginLeft: 8,
+  summaryDivider: {
+    height: 1,
+    backgroundColor: "#E5E7EB",
+    marginVertical: 16,
   },
-  bottomSection: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  selectedUserInfo: {
-    marginTop: 20,
-    padding: 16,
-    backgroundColor: "#EFF6FF",
-    borderRadius: 12,
-    marginBottom: 16,
-  },
-  selectedUserLabel: {
-    fontSize: 12,
-    color: "#6B7280",
-    marginBottom: 4,
-  },
-  selectedUserName: {
+  summaryAmount: {
     fontSize: 18,
     color: "#4939b0",
     fontWeight: "700",
@@ -548,37 +796,24 @@ const styles = StyleSheet.create({
   transferButton: {
     backgroundColor: "#4939b0",
     borderRadius: 12,
-    paddingVertical: 16,
+    paddingVertical: 14,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 16,
-    boxShadow: "0px 4px 8px 0px rgba(30, 64, 175, 0.3)",
+    boxShadow: "0px 4px 12px 0px rgba(73, 57, 176, 0.4)",
     elevation: 5,
   },
   transferButtonDisabled: {
-    opacity: 0.6,
+    opacity: 0.5,
   },
   transferButtonText: {
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "700",
   },
-  floatingButton: {
-    position: "absolute",
-    bottom: 20,
-    right: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#4939b0",
-    justifyContent: "center",
-    alignItems: "center",
-    boxShadow: "0px 4px 8px 0px rgba(0, 0, 0, 0.3)",
-    elevation: 8,
-  },
-  floatingButtonText: {
-    color: "#FFFFFF",
-    fontSize: 24,
-    fontWeight: "700",
+  transferButtonSubtext: {
+    color: "rgba(255, 255, 255, 0.8)",
+    fontSize: 11,
+    marginTop: 3,
+    fontWeight: "400",
   },
 });

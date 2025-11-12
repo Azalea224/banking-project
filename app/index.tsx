@@ -444,12 +444,12 @@ export default function HomePage() {
           <View style={styles.unifiedCardContainer}>
             <View style={styles.unifiedCard}>
               <View style={styles.balanceHeader}>
-                <SkeletonCircle size={60} />
+                <SkeletonCircle size={72} />
                 <View style={{ flex: 1, marginLeft: 16 }}>
                   <Skeleton width={100} height={14} borderRadius={4} />
                   <Skeleton
                     width={200}
-                    height={36}
+                    height={28}
                     borderRadius={4}
                     style={{ marginTop: 4 }}
                   />
@@ -1043,16 +1043,16 @@ const styles = StyleSheet.create({
     marginRight: 16,
   },
   profileImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     borderWidth: 2,
     borderColor: "#FFFFFF",
   },
   profileImagePlaceholder: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     backgroundColor: "#FFFFFF",
     justifyContent: "center",
     alignItems: "center",
@@ -1060,7 +1060,7 @@ const styles = StyleSheet.create({
     borderColor: "#FFFFFF",
   },
   profileImagePlaceholderText: {
-    fontSize: 24,
+    fontSize: 28,
     color: "#4939b0",
     fontWeight: "700",
   },
@@ -1074,7 +1074,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   balanceAmount: {
-    fontSize: 36,
+    fontSize: 28,
     color: "#FFFFFF",
     fontWeight: "700",
   },
