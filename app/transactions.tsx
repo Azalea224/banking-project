@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  TextInput,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
@@ -29,6 +30,13 @@ type TransactionFilter = "deposit" | "withdraw" | "transfer" | null;
 export default function TransactionsPage() {
   const { username, isAuthenticated } = useAuth();
   const [selectedFilter, setSelectedFilter] = useState<TransactionFilter>(null);
+  
+  // Advanced filter states
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
+  const [minAmount, setMinAmount] = useState<string>("");
+  const [maxAmount, setMaxAmount] = useState<string>("");
 
   const {
     data: transactions,
@@ -258,15 +266,86 @@ export default function TransactionsPage() {
     });
   }, [transactions, username, allUsersWithMissing]);
 
-  // Filter transactions based on selected filter
+  // Filter transactions based on selected filter, date range, and amount range
   const filteredTransactions = useMemo(() => {
-    if (!selectedFilter) {
-      return formattedTransactions;
+    let filtered = formattedTransactions;
+
+    // Filter by transaction type
+    if (selectedFilter) {
+      filtered = filtered.filter(
+        (transaction) => transaction.transactionType === selectedFilter
+      );
     }
-    return formattedTransactions.filter(
-      (transaction) => transaction.transactionType === selectedFilter
-    );
-  }, [formattedTransactions, selectedFilter]);
+
+    // Filter by date range
+    if (startDate || endDate) {
+      filtered = filtered.filter((transaction) => {
+        const original = transaction.originalTransaction;
+        if (!original?.createdAt) return false;
+
+        const transactionDate = new Date(original.createdAt);
+        transactionDate.setHours(0, 0, 0, 0); // Reset time to start of day
+
+        if (startDate) {
+          const start = new Date(startDate);
+          start.setHours(0, 0, 0, 0);
+          if (transactionDate < start) return false;
+        }
+
+        if (endDate) {
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999); // End of day
+          if (transactionDate > end) return false;
+        }
+
+        return true;
+      });
+    }
+
+    // Filter by amount range
+    if (minAmount || maxAmount) {
+      filtered = filtered.filter((transaction) => {
+        const original = transaction.originalTransaction;
+        if (!original?.amount) return false;
+
+        const amount = original.amount;
+
+        if (minAmount) {
+          const min = parseFloat(minAmount);
+          if (isNaN(min) || amount < min) return false;
+        }
+
+        if (maxAmount) {
+          const max = parseFloat(maxAmount);
+          if (isNaN(max) || amount > max) return false;
+        }
+
+        return true;
+      });
+    }
+
+    return filtered;
+  }, [
+    formattedTransactions,
+    selectedFilter,
+    startDate,
+    endDate,
+    minAmount,
+    maxAmount,
+  ]);
+
+  // Clear all filters
+  const clearAllFilters = () => {
+    setSelectedFilter(null);
+    setStartDate("");
+    setEndDate("");
+    setMinAmount("");
+    setMaxAmount("");
+  };
+
+  // Check if any filters are active
+  const hasActiveFilters =
+    selectedFilter || startDate || endDate || minAmount || maxAmount;
 
   // Show loading while checking authentication
   if (!isAuthenticated) {
@@ -365,6 +444,103 @@ export default function TransactionsPage() {
           </TouchableOpacity>
         </View>
 
+        {/* Advanced Filters Section */}
+        <View style={styles.advancedFiltersContainer}>
+          <TouchableOpacity
+            style={styles.advancedFiltersToggle}
+            onPress={() => setShowAdvancedFilters(!showAdvancedFilters)}
+          >
+            <Text style={styles.advancedFiltersToggleText}>
+              {showAdvancedFilters ? "▼" : "▶"} Advanced Filters
+            </Text>
+            {hasActiveFilters && (
+              <View style={styles.activeFilterBadge}>
+                <Text style={styles.activeFilterBadgeText}>Active</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+
+          {showAdvancedFilters && (
+            <View style={styles.advancedFiltersContent}>
+              {/* Date Range Filters */}
+              <View style={styles.filterRow}>
+                <Text style={styles.filterLabel}>Date Range</Text>
+                <View style={styles.dateInputRow}>
+                  <View
+                    style={[styles.dateInputContainer, { marginRight: 6 }]}
+                  >
+                    <Text style={styles.dateInputLabel}>From</Text>
+                    <TextInput
+                      style={styles.dateInput}
+                      placeholder="YYYY-MM-DD"
+                      value={startDate}
+                      onChangeText={setStartDate}
+                      placeholderTextColor="#9CA3AF"
+                    />
+                  </View>
+                  <View
+                    style={[styles.dateInputContainer, { marginLeft: 6 }]}
+                  >
+                    <Text style={styles.dateInputLabel}>To</Text>
+                    <TextInput
+                      style={styles.dateInput}
+                      placeholder="YYYY-MM-DD"
+                      value={endDate}
+                      onChangeText={setEndDate}
+                      placeholderTextColor="#9CA3AF"
+                    />
+                  </View>
+                </View>
+              </View>
+
+              {/* Amount Range Filters */}
+              <View style={styles.filterRow}>
+                <Text style={styles.filterLabel}>Amount Range (KWD)</Text>
+                <View style={styles.amountInputRow}>
+                  <View
+                    style={[styles.amountInputContainer, { marginRight: 6 }]}
+                  >
+                    <Text style={styles.amountInputLabel}>Min</Text>
+                    <TextInput
+                      style={styles.amountInput}
+                      placeholder="0.000"
+                      value={minAmount}
+                      onChangeText={setMinAmount}
+                      keyboardType="decimal-pad"
+                      placeholderTextColor="#9CA3AF"
+                    />
+                  </View>
+                  <View
+                    style={[styles.amountInputContainer, { marginLeft: 6 }]}
+                  >
+                    <Text style={styles.amountInputLabel}>Max</Text>
+                    <TextInput
+                      style={styles.amountInput}
+                      placeholder="0.000"
+                      value={maxAmount}
+                      onChangeText={setMaxAmount}
+                      keyboardType="decimal-pad"
+                      placeholderTextColor="#9CA3AF"
+                    />
+                  </View>
+                </View>
+              </View>
+
+              {/* Clear Filters Button */}
+              {hasActiveFilters && (
+                <TouchableOpacity
+                  style={styles.clearFiltersButton}
+                  onPress={clearAllFilters}
+                >
+                  <Text style={styles.clearFiltersButtonText}>
+                    Clear All Filters
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+        </View>
+
         {transactionsLoading ? (
           <View style={styles.transactionsContainer}>
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
@@ -390,8 +566,8 @@ export default function TransactionsPage() {
         ) : filteredTransactions.length === 0 ? (
           <View style={styles.transactionEmptyContainer}>
             <Text style={styles.emptyText}>
-              {selectedFilter
-                ? `No ${selectedFilter} transactions found`
+              {hasActiveFilters
+                ? "No transactions match your filters"
                 : "No transactions yet"}
             </Text>
           </View>
@@ -582,5 +758,107 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 14,
     color: "#6B7280",
+  },
+  advancedFiltersContainer: {
+    marginHorizontal: 20,
+    marginBottom: 16,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    overflow: "hidden",
+  },
+  advancedFiltersToggle: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 12,
+    backgroundColor: "#F9FAFB",
+  },
+  advancedFiltersToggleText: {
+    fontSize: 14,
+    color: "#111827",
+    fontWeight: "600",
+  },
+  activeFilterBadge: {
+    backgroundColor: "#4939b0",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginLeft: 8,
+  },
+  activeFilterBadgeText: {
+    fontSize: 10,
+    color: "#FFFFFF",
+    fontWeight: "600",
+  },
+  advancedFiltersContent: {
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#E5E7EB",
+  },
+  filterRow: {
+    marginBottom: 16,
+  },
+  filterLabel: {
+    fontSize: 14,
+    color: "#374151",
+    fontWeight: "600",
+    marginBottom: 8,
+  },
+  dateInputRow: {
+    flexDirection: "row",
+  },
+  dateInputContainer: {
+    flex: 1,
+  },
+  dateInputLabel: {
+    fontSize: 12,
+    color: "#6B7280",
+    fontWeight: "500",
+    marginBottom: 4,
+  },
+  dateInput: {
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 14,
+    color: "#111827",
+    backgroundColor: "#FFFFFF",
+  },
+  amountInputRow: {
+    flexDirection: "row",
+  },
+  amountInputContainer: {
+    flex: 1,
+  },
+  amountInputLabel: {
+    fontSize: 12,
+    color: "#6B7280",
+    fontWeight: "500",
+    marginBottom: 4,
+  },
+  amountInput: {
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 14,
+    color: "#111827",
+    backgroundColor: "#FFFFFF",
+  },
+  clearFiltersButton: {
+    backgroundColor: "#EF4444",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 8,
+  },
+  clearFiltersButtonText: {
+    fontSize: 14,
+    color: "#FFFFFF",
+    fontWeight: "600",
   },
 });
