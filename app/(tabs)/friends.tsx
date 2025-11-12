@@ -18,6 +18,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { Skeleton, SkeletonCircle, SkeletonText } from "../../components/Skeleton";
 import BottomNav from "../../components/BottomNav";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
 
 const BASE_URL = "https://react-bank-project.eapi.joincoded.com";
 const FRIENDS_STORAGE_KEY = "@friends_list";
@@ -233,18 +234,28 @@ export default function FriendsPage() {
 
               return (
                 <View key={friendId || `friend-${index}`} style={styles.friendCard}>
-                  {imageUri ? (
-                    <Image source={{ uri: imageUri }} style={styles.userImage} />
-                  ) : (
-                    <View style={styles.userImagePlaceholder}>
-                      <Text style={styles.userImagePlaceholderText}>
-                        {friend.username?.charAt(0).toUpperCase() || "U"}
-                      </Text>
+                  <TouchableOpacity
+                    style={styles.friendCardContent}
+                    onPress={() => {
+                      if (friend.username) {
+                        router.push(`/transfer?username=${encodeURIComponent(friend.username)}`);
+                      }
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    {imageUri ? (
+                      <Image source={{ uri: imageUri }} style={styles.userImage} />
+                    ) : (
+                      <View style={styles.userImagePlaceholder}>
+                        <Text style={styles.userImagePlaceholderText}>
+                          {friend.username?.charAt(0).toUpperCase() || "U"}
+                        </Text>
+                      </View>
+                    )}
+                    <View style={styles.userInfo}>
+                      <Text style={styles.userName}>{friend.username || "Unknown"}</Text>
                     </View>
-                  )}
-                  <View style={styles.userInfo}>
-                    <Text style={styles.userName}>{friend.username || "Unknown"}</Text>
-                  </View>
+                  </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.removeButton}
                     onPress={() => handleRemoveFriend(friend)}
@@ -329,6 +340,11 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     boxShadow: "0px 1px 2px 0px rgba(0, 0, 0, 0.05)",
     elevation: 2,
+  },
+  friendCardContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
   },
   userImage: {
     width: 56,

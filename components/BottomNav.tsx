@@ -21,9 +21,9 @@ const navItems: NavItem[] = [
     isImage: false,
   },
   {
-    id: "achievements",
-    label: "Achievements",
-    route: "/achievements",
+    id: "level",
+    label: "Level",
+    route: "/level",
     icon: "🏆",
     isImage: false,
   },

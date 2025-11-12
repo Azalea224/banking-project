@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -19,7 +19,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getAllUsers, User } from "../api/auth";
 import { transfer, TransferResponse } from "../api/transactions";
 import { useAuth } from "../contexts/AuthContext";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useSound } from "../hooks/useSound";
 
 const transferValidationSchema = Yup.object().shape({
@@ -41,6 +41,11 @@ const BASE_URL = "https://react-bank-project.eapi.joincoded.com";
 const QUICK_AMOUNTS = [10, 25, 50, 100, 250, 500];
 
 export default function TransferPage() {
+  const params = useLocalSearchParams<{ username: string | string[] }>();
+  const usernameParam = Array.isArray(params.username) 
+    ? params.username[0] 
+    : params.username;
+  
   const { username, isAuthenticated, token } = useAuth();
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -57,6 +62,24 @@ export default function TransferPage() {
     queryFn: getAllUsers,
     enabled: isAuthenticated,
   });
+
+  // Auto-select user if username parameter is provided
+  useEffect(() => {
+    if (usernameParam && users && users.length > 0) {
+      // Check if we need to select a user (either no user selected, or different user selected)
+      const shouldSelectUser = !selectedUser || 
+        selectedUser.username?.toLowerCase() !== usernameParam.toLowerCase();
+      
+      if (shouldSelectUser) {
+        const userToSelect = users.find(
+          (user) => user.username?.toLowerCase() === usernameParam.toLowerCase()
+        );
+        if (userToSelect) {
+          setSelectedUser(userToSelect);
+        }
+      }
+    }
+  }, [usernameParam, users]);
 
   const transferMutation = useMutation<
     TransferResponse,

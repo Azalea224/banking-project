@@ -41,6 +41,7 @@ export default function ProfilePage() {
     isLoading: authLoading,
     setUserId,
     userId,
+    logout,
   } = useAuth();
   const [imageError, setImageError] = useState(false);
   const queryClient = useQueryClient();
@@ -110,6 +111,42 @@ export default function ProfilePage() {
       setImageError(false);
     }
   }, [profile]);
+
+  const handleLogout = () => {
+    // Use window.confirm for web, Alert.alert for native
+    if (Platform.OS === "web") {
+      const confirmed = window.confirm("Are you sure you want to logout?");
+      if (confirmed) {
+        logout()
+          .then(() => {
+            router.replace("/register");
+          })
+          .catch((error) => {
+            console.error("Logout error:", error);
+            window.alert("Failed to logout. Please try again.");
+          });
+      }
+    } else {
+      Alert.alert("Logout", "Are you sure you want to logout?", [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Logout",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await logout();
+              router.replace("/register");
+            } catch (error) {
+              Alert.alert("Error", "Failed to logout. Please try again.");
+            }
+          },
+        },
+      ]);
+    }
+  };
 
   const pickImage = async () => {
     if (Platform.OS === "web") {
@@ -376,6 +413,13 @@ export default function ProfilePage() {
           <Text style={styles.editImageHint}>
             Tap the image above to update your profile picture
           </Text>
+          
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={handleLogout}
+          >
+            <Text style={styles.logoutButtonText}>Logout</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
       <BottomNav />
@@ -560,6 +604,32 @@ const styles = StyleSheet.create({
     color: "#4939b0",
     fontSize: 16,
     fontWeight: "600",
+    textAlign: "center",
+  },
+  logoutButton: {
+    backgroundColor: "#EF4444",
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    marginTop: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    ...Platform.select({
+      ios: {
+        shadowColor: "rgba(239, 68, 68, 0.3)",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 1,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
+  logoutButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
     textAlign: "center",
   },
 });

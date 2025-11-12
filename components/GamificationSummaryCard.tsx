@@ -66,7 +66,7 @@ export const GamificationSummaryCard: React.FC<GamificationSummaryCardProps> = (
       <View style={styles.statsRow}>
         <TouchableOpacity
           style={styles.statItem}
-          onPress={() => router.push("/achievements?filter=unlocked")}
+          onPress={() => router.push("/level?filter=unlocked")}
         >
           <Text style={styles.statValue}>{unlockedCount}</Text>
           <Text style={styles.statLabel}>Unlocked</Text>
@@ -74,7 +74,7 @@ export const GamificationSummaryCard: React.FC<GamificationSummaryCardProps> = (
         <View style={styles.statDivider} />
         <TouchableOpacity
           style={styles.statItem}
-          onPress={() => router.push("/achievements?filter=locked")}
+          onPress={() => router.push("/level?filter=locked")}
         >
           <Text style={styles.statValue}>{lockedCount}</Text>
           <Text style={styles.statLabel}>Locked</Text>
@@ -97,7 +97,7 @@ const commonStyles = {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 12,
   },
   levelBadge: {
     backgroundColor: "rgba(255, 255, 255, 0.1)",
@@ -116,7 +116,7 @@ const commonStyles = {
     alignItems: "flex-end",
   },
   xpContainer: {
-    marginBottom: 16,
+    marginBottom: 12,
   },
   xpHeader: {
     flexDirection: "row",
@@ -127,7 +127,7 @@ const commonStyles = {
   statsRow: {
     flexDirection: "row",
     justifyContent: "space-around",
-    paddingTop: 16,
+    paddingTop: 12,
   },
   statItem: {
     alignItems: "center",
@@ -193,13 +193,13 @@ const lightStyles = StyleSheet.create({
     backgroundColor: "#E5E7EB",
   },
   statValue: {
-    fontSize: 20,
+    fontSize: 16,
     color: "#4939b0",
     fontWeight: "700",
     marginBottom: 4,
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 10,
     color: "#6B7280",
     fontWeight: "500",
   },
@@ -250,13 +250,13 @@ const darkStyles = StyleSheet.create({
     backgroundColor: "rgba(255, 255, 255, 0.2)",
   },
   statValue: {
-    fontSize: 20,
+    fontSize: 16,
     color: "#FFFFFF",
     fontWeight: "700",
     marginBottom: 4,
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 10,
     color: "rgba(255, 255, 255, 0.7)",
     fontWeight: "500",
   },

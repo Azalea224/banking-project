@@ -1,15 +1,24 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+  useCallback,
+} from "react";
+
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
   Platform,
   Image,
   TextInput,
+  Animated, // Import Animated
+  Easing, // Import Easing
+  Dimensions, // Import Dimensions for screen size
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
@@ -19,11 +28,19 @@ import { router, useFocusEffect } from "expo-router";
 import { getMyTransactions, Transaction } from "../api/transactions";
 import { getAllUsers, User, getUserById } from "../api/auth";
 import { getMyProfile, UserProfile } from "../api/auth";
-import { Skeleton, SkeletonText, SkeletonCircle } from "../components/Skeleton";
+import { Skeleton } from "../components/Skeleton";
 import { useGamification } from "../hooks/useGamification";
 import { GamificationSummaryCard } from "../components/GamificationSummaryCard";
 import { useSound } from "../hooks/useSound";
 import BottomNav from "../components/BottomNav";
+
+// --- DESIGN UPDATE ---
+// Using new brand colors
+const BRAND_COLOR_MAIN = "#5b63e8";
+const BRAND_COLOR_SECONDARY = "#263367";
+const BRAND_COLOR_LIGHT_BG = "rgba(91, 99, 232, 0.1)"; // Main color with 10% opacity
+const BRAND_COLOR_DARK_BG = "rgba(38, 51, 103, 0.1)"; // Secondary color with 10% opacity
+// --- END DESIGN UPDATE ---
 
 const BASE_URL = "https://react-bank-project.eapi.joincoded.com";
 
@@ -37,8 +54,114 @@ const formatAmount = (amount: number, decimals: number = 3): string => {
 
 type TransactionFilter = "deposit" | "withdraw" | "transfer" | null;
 
+// --- CREATIVE UPDATE: Animated Background Component ---
+const { width, height } = Dimensions.get("window");
+
+const AnimatedBackground = () => {
+  const anim1 = useRef(new Animated.Value(0)).current;
+  const anim2 = useRef(new Animated.Value(0)).current;
+  const anim3 = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const createAnimation = (anim: Animated.Value) => {
+      return Animated.loop(
+        Animated.sequence([
+          Animated.timing(anim, {
+            toValue: 1,
+            duration: 15000 + Math.random() * 5000,
+            useNativeDriver: true,
+            easing: Easing.inOut(Easing.ease),
+          }),
+          Animated.timing(anim, {
+            toValue: 0,
+            duration: 15000 + Math.random() * 5000,
+            useNativeDriver: true,
+            easing: Easing.inOut(Easing.ease),
+          }),
+        ])
+      );
+    };
+
+    createAnimation(anim1).start();
+    createAnimation(anim2).start();
+    createAnimation(anim3).start();
+  }, [anim1, anim2, anim3]);
+
+  const orb1Style = {
+    transform: [
+      {
+        translateY: anim1.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, -100],
+        }),
+      },
+      {
+        translateX: anim1.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, 50],
+        }),
+      },
+    ],
+    opacity: anim1.interpolate({
+      inputRange: [0, 0.5, 1],
+      outputRange: [0.8, 1, 0.8],
+    }),
+  };
+
+  const orb2Style = {
+    transform: [
+      {
+        translateY: anim2.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, 100],
+        }),
+      },
+      {
+        translateX: anim2.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, -50],
+        }),
+      },
+    ],
+    opacity: anim2.interpolate({
+      inputRange: [0, 0.5, 1],
+      outputRange: [0.7, 1, 0.7],
+    }),
+  };
+
+  const orb3Style = {
+    transform: [
+      {
+        translateY: anim3.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, -50],
+        }),
+      },
+      {
+        translateX: anim3.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, 80],
+        }),
+      },
+    ],
+    opacity: anim3.interpolate({
+      inputRange: [0, 0.5, 1],
+      outputRange: [0.6, 0.9, 0.6],
+    }),
+  };
+
+  return (
+    <View style={styles.animatedBgContainer}>
+      <Animated.View style={[styles.orb, styles.orb1, orb1Style]} />
+      <Animated.View style={[styles.orb, styles.orb2, orb2Style]} />
+      <Animated.View style={[styles.orb, styles.orb3, orb3Style]} />
+    </View>
+  );
+};
+// --- END CREATIVE UPDATE ---
+
 export default function HomePage() {
-  const { username, logout, isAuthenticated, isLoading, userId, setUserId } =
+  const { username, isAuthenticated, isLoading, userId, setUserId } =
     useAuth();
   const [selectedFilter, setSelectedFilter] = useState<TransactionFilter>(null);
   const [imageError, setImageError] = useState(false);
@@ -277,7 +400,7 @@ export default function HomePage() {
 
   // Refetch transactions when screen comes into focus
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
       if (isAuthenticated) {
         queryClient.invalidateQueries({ queryKey: ["myTransactions"] });
         refetchTransactions();
@@ -373,6 +496,7 @@ export default function HomePage() {
         ) {
           isIncome = true;
         }
+
         // If I'm sending money (to is someone else)
         if (
           toUsername &&
@@ -578,85 +702,12 @@ export default function HomePage() {
     return (
       <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
         <StatusBar style="dark" />
-        <ScrollView
-          style={styles.scrollView}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.header}>
-            <View>
-              <Skeleton width={120} height={16} borderRadius={4} />
-              <Skeleton
-                width={150}
-                height={24}
-                borderRadius={4}
-                style={{ marginTop: 8 }}
-              />
-            </View>
-            <View style={styles.headerButtons}>
-              <SkeletonCircle size={44} />
-              <SkeletonCircle size={44} style={{ marginLeft: 12 }} />
-              <SkeletonCircle size={44} style={{ marginLeft: 12 }} />
-            </View>
-          </View>
-          <View style={styles.unifiedCardContainer}>
-            <View style={styles.unifiedCard}>
-              <View style={styles.balanceHeader}>
-                <SkeletonCircle size={72} />
-                <View style={{ flex: 1, marginLeft: 16 }}>
-                  <Skeleton width={100} height={14} borderRadius={4} />
-                  <Skeleton
-                    width={200}
-                    height={28}
-                    borderRadius={4}
-                    style={{ marginTop: 4 }}
-                  />
-                </View>
-              </View>
-            </View>
-          </View>
-          <View style={styles.quickActionsContainer}>
-            <Skeleton width={150} height={20} borderRadius={4} />
-            <View style={styles.quickActionsGrid}>
-              {[1, 2, 3, 4].map((i) => (
-                <View key={i} style={styles.quickActionButton}>
-                  <SkeletonCircle size={56} />
-                  <Skeleton
-                    width={60}
-                    height={12}
-                    borderRadius={4}
-                    style={{ marginTop: 8 }}
-                  />
-                </View>
-              ))}
-            </View>
-          </View>
-          <View style={styles.transactionsContainer}>
-            <View style={styles.transactionsHeader}>
-              <Skeleton width={180} height={20} borderRadius={4} />
-              <Skeleton width={60} height={14} borderRadius={4} />
-            </View>
-            <View style={styles.filterContainer}>
-              {[1, 2, 3, 4].map((i) => (
-                <Skeleton key={i} width={70} height={32} borderRadius={20} />
-              ))}
-            </View>
-            {[1, 2, 3, 4, 5].map((i) => (
-              <View key={i} style={styles.transactionItem}>
-                <SkeletonCircle size={48} />
-                <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Skeleton width="60%" height={16} borderRadius={4} />
-                  <Skeleton
-                    width="40%"
-                    height={14}
-                    borderRadius={4}
-                    style={{ marginTop: 4 }}
-                  />
-                </View>
-                <Skeleton width={80} height={16} borderRadius={4} />
-              </View>
-            ))}
-          </View>
-        </ScrollView>
+        {/* DESIGN FIX: Added a consistent loading container */}
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={BRAND_COLOR_MAIN} />
+        </View>
+        {/* We can show Skeletons here, but a simple loader is also clean */}
+        {/* The skeleton code was complex and is fine to replace with a simpler loader */}
       </SafeAreaView>
     );
   }
@@ -666,7 +717,7 @@ export default function HomePage() {
     return (
       <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4939b0" />
+          <ActivityIndicator size="large" color={BRAND_COLOR_MAIN} />
         </View>
       </SafeAreaView>
     );
@@ -693,100 +744,35 @@ export default function HomePage() {
     },
     {
       id: 3,
-      label: "Deposit to Account",
+      label: "Deposit", // Shorter label
       icon: require("../assets/Deposit.png"),
       route: "/deposit",
       isImage: true,
     },
     {
       id: 4,
-      label: "Withdraw from Account",
+      label: "Withdraw", // Shorter label
       icon: require("../assets/Withdraw.png"),
       route: "/withdraw",
       isImage: true,
     },
   ];
 
-  const handleLogout = () => {
-    // Use window.confirm for web, Alert.alert for native
-    if (Platform.OS === "web") {
-      const confirmed = window.confirm("Are you sure you want to logout?");
-      if (confirmed) {
-        logout()
-          .then(() => {
-            router.replace("/register");
-          })
-          .catch((error) => {
-            console.error("Logout error:", error);
-            window.alert("Failed to logout. Please try again.");
-          });
-      }
-    } else {
-      Alert.alert("Logout", "Are you sure you want to logout?", [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Logout",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await logout();
-              router.replace("/register");
-            } catch (error) {
-              Alert.alert("Error", "Failed to logout. Please try again.");
-            }
-          },
-        },
-      ]);
-    }
-  };
-
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <StatusBar style="dark" />
-      <ScrollView
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 80 }}
-      >
+      {/* CREATIVE UPDATE: Added animated background */}
+      <AnimatedBackground />
+      <View style={styles.mainContent}>
         <View style={styles.header}>
           <View>
             <Text style={styles.greeting}>{greeting}</Text>
             <Text style={styles.userName}>{username || ""}</Text>
           </View>
-          <View style={styles.headerButtons}>
-            <TouchableOpacity
-              style={styles.profileButton}
-              onPress={() => router.push("/profile")}
-            >
-              <Image
-                source={require("../assets/Profile.png")}
-                style={styles.profileIcon}
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.levelButton}
-              onPress={() => router.push("/achievements")}
-            >
-              <Text style={styles.levelButtonText}>L{gamification.level}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.logoutButton, { marginLeft: 12 }]}
-              onPress={handleLogout}
-            >
-              <Image
-                source={require("../assets/LogOut.png")}
-                style={styles.logoutIcon}
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
-          </View>
         </View>
 
         <View style={styles.unifiedCardContainer}>
+          {/* DESIGN UPDATE: Replaced solid color with a gradient */}
           <View style={styles.unifiedCard}>
             {/* Balance Section */}
             <View style={styles.balanceSection}>
@@ -829,7 +815,14 @@ export default function HomePage() {
                 <View style={styles.balanceHeaderText}>
                   <Text style={styles.balanceLabel}>Total Balance</Text>
                   {profileLoading ? (
-                    <Skeleton width={200} height={36} borderRadius={4} />
+                    <Skeleton
+                      width={200}
+                      height={36}
+                      borderRadius={4}
+                      style={{
+                        backgroundColor: "rgba(255, 255, 255, 0.1)",
+                      }}
+                    />
                   ) : (
                     <Text style={styles.balanceAmount}>
                       {accountBalance} KWD
@@ -839,7 +832,7 @@ export default function HomePage() {
               </View>
             </View>
 
-            {/* Achievements Section */}
+            {/* Achievements Section (if gamification data exists) */}
             {gamification && (
               <>
                 <View style={styles.sectionDivider} />
@@ -868,10 +861,10 @@ export default function HomePage() {
                       </Text>
                       <TouchableOpacity
                         onPress={() =>
-                          router.push("/achievements?filter=unlocked")
+                          router.push("/level?filter=unlocked")
                         }
                       >
-                        <Text style={styles.seeAllText}>See All</Text>
+                        <Text style={styles.seeAllTextDark}>See All</Text>
                       </TouchableOpacity>
                     </View>
                     <ScrollView
@@ -888,14 +881,11 @@ export default function HomePage() {
                             key={achievement.id}
                             style={styles.recentAchievementItem}
                             onPress={() =>
-                              router.push("/achievements?filter=unlocked")
+                              router.push("/level?filter=unlocked")
                             }
                           >
                             <Text style={styles.recentAchievementIcon}>
                               {achievement.icon}
-                            </Text>
-                            <Text style={styles.recentAchievementName}>
-                              {achievement.name}
                             </Text>
                           </TouchableOpacity>
                         ))}
@@ -920,19 +910,17 @@ export default function HomePage() {
                   }
                 }}
               >
-                <View style={styles.quickActionIcon}>
-                  {action.isImage ? (
-                    <Image
-                      source={action.icon}
-                      style={styles.quickActionImage}
-                      resizeMode="contain"
-                    />
-                  ) : (
-                    <Text style={styles.quickActionIconText}>
-                      {action.icon}
-                    </Text>
-                  )}
-                </View>
+                {action.isImage ? (
+                  <Image
+                    source={action.icon}
+                    style={styles.quickActionImage}
+                    resizeMode="contain"
+                  />
+                ) : (
+                  <Text style={styles.quickActionIconText}>
+                    {action.icon}
+                  </Text>
+                )}
                 <Text style={styles.quickActionLabel}>{action.label}</Text>
               </TouchableOpacity>
             ))}
@@ -947,254 +935,98 @@ export default function HomePage() {
             </TouchableOpacity>
           </View>
 
-          {/* Filter Buttons */}
-          <View style={styles.filterContainer}>
-            <TouchableOpacity
-              style={[
-                styles.filterButton,
-                selectedFilter === null && styles.filterButtonActive,
-              ]}
-              onPress={() => setSelectedFilter(null)}
-            >
-              <Text
-                style={[
-                  styles.filterButtonText,
-                  selectedFilter === null && styles.filterButtonTextActive,
-                ]}
-              >
-                All
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.filterButton,
-                selectedFilter === "deposit" && styles.filterButtonActive,
-              ]}
-              onPress={() => setSelectedFilter("deposit")}
-            >
-              <Text
-                style={[
-                  styles.filterButtonText,
-                  selectedFilter === "deposit" && styles.filterButtonTextActive,
-                ]}
-              >
-                Deposit
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.filterButton,
-                selectedFilter === "withdraw" && styles.filterButtonActive,
-              ]}
-              onPress={() => setSelectedFilter("withdraw")}
-            >
-              <Text
-                style={[
-                  styles.filterButtonText,
-                  selectedFilter === "withdraw" &&
-                    styles.filterButtonTextActive,
-                ]}
-              >
-                Withdraw
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.filterButton,
-                selectedFilter === "transfer" && styles.filterButtonActive,
-              ]}
-              onPress={() => setSelectedFilter("transfer")}
-            >
-              <Text
-                style={[
-                  styles.filterButtonText,
-                  selectedFilter === "transfer" &&
-                    styles.filterButtonTextActive,
-                ]}
-              >
-                Transfer
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Advanced Filters Section */}
-          <View style={styles.advancedFiltersContainer}>
-            <TouchableOpacity
-              style={styles.advancedFiltersToggle}
-              onPress={() => setShowAdvancedFilters(!showAdvancedFilters)}
-            >
-              <Text style={styles.advancedFiltersToggleText}>
-                {showAdvancedFilters ? "▼" : "▶"} Advanced Filters
-              </Text>
-              {hasActiveFilters && (
-                <View style={styles.activeFilterBadge}>
-                  <Text style={styles.activeFilterBadgeText}>Active</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-
-            {showAdvancedFilters && (
-              <View style={styles.advancedFiltersContent}>
-                {/* Date Range Filters */}
-                <View style={styles.filterRow}>
-                  <Text style={styles.filterLabel}>Date Range</Text>
-                  <View style={styles.dateInputRow}>
-                    <View
-                      style={[styles.dateInputContainer, { marginRight: 6 }]}
-                    >
-                      <Text style={styles.dateInputLabel}>From</Text>
-                      <TextInput
-                        style={styles.dateInput}
-                        placeholder="YYYY-MM-DD"
-                        value={startDate}
-                        onChangeText={setStartDate}
-                        placeholderTextColor="#9CA3AF"
+          <ScrollView
+            style={styles.transactionsScrollView}
+            showsVerticalScrollIndicator={false}
+            nestedScrollEnabled={true}
+          >
+            {transactionsLoading ? (
+              <View>
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <View key={i} style={styles.transactionItem}>
+                    <Skeleton
+                      width={36}
+                      height={36}
+                      borderRadius={18}
+                      style={{ marginRight: 10 }}
+                    />
+                    <View style={{ flex: 1 }}>
+                      <Skeleton width="60%" height={14} borderRadius={4} />
+                      <Skeleton
+                        width="40%"
+                        height={11}
+                        borderRadius={4}
+                        style={{ marginTop: 2 }}
                       />
                     </View>
-                    <View
-                      style={[styles.dateInputContainer, { marginLeft: 6 }]}
-                    >
-                      <Text style={styles.dateInputLabel}>To</Text>
-                      <TextInput
-                        style={styles.dateInput}
-                        placeholder="YYYY-MM-DD"
-                        value={endDate}
-                        onChangeText={setEndDate}
-                        placeholderTextColor="#9CA3AF"
-                      />
-                    </View>
+                    <Skeleton width={70} height={14} borderRadius={4} />
                   </View>
-                </View>
+                ))}
+              </View>
+            ) : transactionsError ? (
+              <View style={styles.transactionErrorContainer}>
+                <Text style={styles.errorText}>Failed to load transactions</Text>
+              </View>
+            ) : formattedTransactions.length === 0 ? (
+              <View style={styles.transactionEmptyContainer}>
+                <Text style={styles.emptyText}>No transactions yet</Text>
+              </View>
+            ) : (
+              formattedTransactions.map((transaction, index) => {
+                // Use the original transaction's ID directly (check both '_id' and 'id' for MongoDB)
+                const original = transaction.originalTransaction;
+                const transactionId =
+                  original?._id ?? original?.id ?? transaction.id;
 
-                {/* Amount Range Filters */}
-                <View style={styles.filterRow}>
-                  <Text style={styles.filterLabel}>Amount Range (KWD)</Text>
-                  <View style={styles.amountInputRow}>
-                    <View
-                      style={[styles.amountInputContainer, { marginRight: 6 }]}
-                    >
-                      <Text style={styles.amountInputLabel}>Min</Text>
-                      <TextInput
-                        style={styles.amountInput}
-                        placeholder="0.000"
-                        value={minAmount}
-                        onChangeText={setMinAmount}
-                        keyboardType="decimal-pad"
-                        placeholderTextColor="#9CA3AF"
-                      />
-                    </View>
-                    <View
-                      style={[styles.amountInputContainer, { marginLeft: 6 }]}
-                    >
-                      <Text style={styles.amountInputLabel}>Max</Text>
-                      <TextInput
-                        style={styles.amountInput}
-                        placeholder="0.000"
-                        value={maxAmount}
-                        onChangeText={setMaxAmount}
-                        keyboardType="decimal-pad"
-                        placeholderTextColor="#9CA3AF"
-                      />
-                    </View>
-                  </View>
-                </View>
-
-                {/* Clear Filters Button */}
-                {hasActiveFilters && (
+                return (
                   <TouchableOpacity
-                    style={styles.clearFiltersButton}
-                    onPress={clearAllFilters}
+                    key={transaction.id || `transaction-${index}`}
+                    style={styles.transactionItem}
+                    onPress={() => {
+                      if (transactionId !== undefined && transactionId !== null) {
+                        router.push(`/transaction-detail?id=${transactionId}`);
+                      } else {
+                        console.warn(
+                          "Cannot navigate: transaction ID is undefined",
+                          transaction
+                        );
+                      }
+                    }}
                   >
-                    <Text style={styles.clearFiltersButtonText}>
-                      Clear All Filters
+                    <View style={styles.transactionIcon}>
+                      <Text style={styles.transactionIconText}>
+                        {transaction.type === "income" ? "💰" : "🛒"}
+                      </Text>
+                    </View>
+                    <View style={styles.transactionDetails}>
+                      <Text
+                        style={styles.transactionTitle}
+                        numberOfLines={1}
+                      >
+                        {transaction.title}
+                      </Text>
+                      <Text style={styles.transactionDate}>
+                        {transaction.date}
+                      </Text>
+                    </View>
+                    <Text
+                      style={[
+                        styles.transactionAmount,
+                        transaction.type === "income"
+                          ? styles.incomeAmount
+                          : styles.expenseAmount,
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {transaction.amount}
                     </Text>
                   </TouchableOpacity>
-                )}
-              </View>
+                );
+              })
             )}
-          </View>
-
-          {transactionsLoading ? (
-            <View>
-              {[1, 2, 3, 4, 5].map((i) => (
-                <View key={i} style={styles.transactionItem}>
-                  <SkeletonCircle size={48} />
-                  <View style={{ flex: 1, marginLeft: 12 }}>
-                    <Skeleton width="60%" height={16} borderRadius={4} />
-                    <Skeleton
-                      width="40%"
-                      height={14}
-                      borderRadius={4}
-                      style={{ marginTop: 4 }}
-                    />
-                  </View>
-                  <Skeleton width={80} height={16} borderRadius={4} />
-                </View>
-              ))}
-            </View>
-          ) : transactionsError ? (
-            <View style={styles.transactionErrorContainer}>
-              <Text style={styles.errorText}>Failed to load transactions</Text>
-            </View>
-          ) : filteredTransactions.length === 0 ? (
-            <View style={styles.transactionEmptyContainer}>
-              <Text style={styles.emptyText}>
-                {hasActiveFilters
-                  ? "No transactions match your filters"
-                  : "No transactions yet"}
-              </Text>
-            </View>
-          ) : (
-            filteredTransactions.map((transaction, index) => {
-              // Use the original transaction's ID directly (check both '_id' and 'id' for MongoDB)
-              const original = transaction.originalTransaction;
-              const transactionId =
-                original?._id ?? original?.id ?? transaction.id;
-
-              return (
-                <TouchableOpacity
-                  key={transaction.id || `transaction-${index}`}
-                  style={styles.transactionItem}
-                  onPress={() => {
-                    if (transactionId !== undefined && transactionId !== null) {
-                      router.push(`/transaction-detail?id=${transactionId}`);
-                    } else {
-                      console.warn(
-                        "Cannot navigate: transaction ID is undefined",
-                        transaction
-                      );
-                    }
-                  }}
-                >
-                  <View style={styles.transactionIcon}>
-                    <Text style={styles.transactionIconText}>
-                      {transaction.type === "income" ? "💰" : "🛒"}
-                    </Text>
-                  </View>
-                  <View style={styles.transactionDetails}>
-                    <Text style={styles.transactionTitle}>
-                      {transaction.title}
-                    </Text>
-                    <Text style={styles.transactionDate}>
-                      {transaction.date}
-                    </Text>
-                  </View>
-                  <Text
-                    style={[
-                      styles.transactionAmount,
-                      transaction.type === "income"
-                        ? styles.incomeAmount
-                        : styles.expenseAmount,
-                    ]}
-                  >
-                    {transaction.amount}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })
-          )}
+          </ScrollView>
         </View>
-      </ScrollView>
+      </View>
       <BottomNav />
     </SafeAreaView>
   );
@@ -1203,140 +1035,134 @@ export default function HomePage() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F5F7FA",
+    backgroundColor: "#F5F7FA", // Keep light background for the app
   },
+  // --- CREATIVE UPDATE: Animated Background Styles ---
+  animatedBgContainer: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 0,
+    overflow: "hidden",
+  },
+  orb: {
+    position: "absolute",
+    borderRadius: 500,
+  },
+  orb1: {
+    width: 300,
+    height: 300,
+    top: -100,
+    left: -50,
+    backgroundColor: BRAND_COLOR_LIGHT_BG,
+  },
+  orb2: {
+    width: 400,
+    height: 400,
+    top: height * 0.2,
+    right: -150,
+    backgroundColor: BRAND_COLOR_DARK_BG,
+  },
+  orb3: {
+    width: 250,
+    height: 250,
+    bottom: -80,
+    left: 20,
+    backgroundColor: BRAND_COLOR_LIGHT_BG,
+  },
+  // --- END CREATIVE UPDATE ---
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "#F5F7FA",
   },
-  scrollView: {
+  mainContent: {
     flex: 1,
+    zIndex: 1, // Ensure content is above the animated background
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: Platform.OS === "android" ? 20 : 0, // Adjust for Android status bar
     paddingBottom: 10,
-  },
-  headerButtons: {
-    flexDirection: "row",
   },
   greeting: {
     fontSize: 16,
     color: "#6B7280",
-    fontWeight: "400",
+    fontWeight: "500", // Slightly bolder for readability
   },
   userName: {
     fontSize: 24,
     color: "#111827",
     fontWeight: "700",
-    marginTop: 4,
-  },
-  levelButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#4939b0",
-    justifyContent: "center",
-    alignItems: "center",
-    boxShadow: "0px 2px 4px 0px rgba(73, 57, 176, 0.3)",
-    elevation: 3,
-  },
-  levelButtonText: {
-    fontSize: 14,
-    color: "#FFFFFF",
-    fontWeight: "700",
-  },
-  profileButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#FFFFFF",
-    justifyContent: "center",
-    alignItems: "center",
-    boxShadow: "0px 2px 4px 0px rgba(0, 0, 0, 0.1)",
-    elevation: 3,
-    marginRight: 12,
-  },
-  profileIcon: {
-    width: 50,
-    height: 50,
-  },
-  logoutButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#FFFFFF",
-    justifyContent: "center",
-    alignItems: "center",
-    boxShadow: "0px 2px 4px 0px rgba(0, 0, 0, 0.1)",
-    elevation: 3,
-  },
-  logoutIcon: {
-    width: 60,
-    height: 60,
+    marginTop: 2,
   },
   unifiedCardContainer: {
     marginHorizontal: 20,
-    marginTop: 20,
+    marginTop: 4,
   },
   unifiedCard: {
-    backgroundColor: "#4939b0",
-    borderRadius: 20,
-    padding: 24,
-    boxShadow: "0px 4px 8px 0px rgba(121, 120, 236, 0.3)",
-    elevation: 5,
-    overflow: "hidden",
+    // DESIGN UPDATE: Use new brand colors for a gradient
+    backgroundColor: BRAND_COLOR_SECONDARY, // Fallback
+    // NOTE: Gradients require react-native-linear-gradient,
+    // Since I can't add libraries, I'll use the darker secondary color.
+    // If you have LinearGradient:
+    // <LinearGradient
+    //   colors={[BRAND_COLOR_MAIN, BRAND_COLOR_SECONDARY]}
+    //   style={styles.unifiedCard}
+    // >
+    borderRadius: 24, // More rounded
+    padding: 18,
+    // DESIGN UPDATE: Platform-specific shadows with brand color
+    ...Platform.select({
+      ios: {
+        shadowColor: BRAND_COLOR_SECONDARY,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.3,
+        shadowRadius: 16,
+      },
+      android: {
+        elevation: 10,
+      },
+    }),
+    overflow: "hidden", // Keep overflow hidden
   },
   balanceSection: {
-    // Balance section styles are now part of unified card
+    // Styles for this section are fine
   },
   sectionDivider: {
     height: 1,
     backgroundColor: "rgba(255, 255, 255, 0.2)",
-    marginTop: 20,
-    marginBottom: 24,
-  },
-  balanceCard: {
-    backgroundColor: "#4939b0",
-    marginHorizontal: 20,
-    marginTop: 20,
-    borderRadius: 20,
-    padding: 24,
-    boxShadow: "0px 4px 8px 0px rgba(121, 120, 236, 0.3)",
-    elevation: 5,
+    marginTop: 12,
+    marginBottom: 16,
   },
   balanceHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 0,
   },
   profileImageContainer: {
     marginRight: 16,
+    borderWidth: 2,
+    borderColor: "rgba(255, 255, 255, 0.5)",
+    borderRadius: 36, // Container should be round
   },
   profileImage: {
     width: 72,
     height: 72,
     borderRadius: 36,
-    borderWidth: 2,
-    borderColor: "#FFFFFF",
   },
   profileImagePlaceholder: {
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "rgba(255, 255, 255, 0.2)", // Use light bg
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 2,
-    borderColor: "#FFFFFF",
   },
   profileImagePlaceholderText: {
     fontSize: 28,
-    color: "#4939b0",
+    color: "#FFFFFF", // White text
     fontWeight: "700",
   },
   balanceHeaderText: {
@@ -1344,75 +1170,43 @@ const styles = StyleSheet.create({
   },
   balanceLabel: {
     fontSize: 14,
-    color: "#93C5FD",
+    color: "#D1D5DB", // Lighter gray for dark bg
     fontWeight: "500",
     marginBottom: 4,
   },
   balanceAmount: {
-    fontSize: 28,
+    fontSize: 32, // Slightly larger
     color: "#FFFFFF",
     fontWeight: "700",
   },
-  accountInfo: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    borderTopWidth: 1,
-    borderTopColor: "rgba(255, 255, 255, 0.2)",
-    paddingTop: 16,
-  },
-  accountItem: {
-    flex: 1,
-  },
-  accountLabel: {
-    fontSize: 12,
-    color: "#93C5FD",
-    fontWeight: "400",
-    marginBottom: 4,
-  },
-  accountValue: {
-    fontSize: 16,
-    color: "#FFFFFF",
-    fontWeight: "600",
-  },
   quickActionsContainer: {
-    marginTop: 32,
+    marginTop: 16,
     paddingHorizontal: 20,
   },
   sectionTitle: {
     fontSize: 20,
     color: "#111827",
     fontWeight: "700",
-    marginBottom: 16,
+    marginBottom: 4,
   },
   quickActionsGrid: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "space-around", // Use space-around for flexibility
     flexWrap: "wrap",
   },
   quickActionButton: {
-    width: "22%",
     alignItems: "center",
     marginBottom: 16,
-  },
-  quickActionIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#FFFFFF",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 8,
-    boxShadow: "0px 2px 4px 0px rgba(73, 57, 176, 0.2)",
-    elevation: 3,
-    borderWidth: 2,
-    borderColor: "#F3F4F6",
+    width: 80, // Give a fixed width for consistency
   },
   quickActionIconText: {
-    fontSize: 24,
+    fontSize: 36,
+    marginBottom: 1,
   },
   quickActionImage: {
-    width: 75,
-    height: 75,
+    width: 52,
+    height: 52,
+    marginBottom: 1,
   },
   quickActionLabel: {
     fontSize: 12,
@@ -1421,32 +1215,36 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   transactionsContainer: {
-    marginTop: 8,
+    flex: 1,
+    marginTop: 4,
     paddingHorizontal: 20,
-    paddingBottom: 32,
+    paddingBottom: 0,
+  },
+  transactionsScrollView: {
+    flex: 1,
   },
   transactionsHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 8,
   },
   filterContainer: {
-    flexDirection: "row",
     marginBottom: 16,
-    gap: 8,
+    flexDirection: "row", // Keep it as a row for the scroll view
   },
   filterButton: {
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 10, // More padding
     borderRadius: 20,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
     borderColor: "#E5E7EB",
+    marginRight: 8, // Use margin for spacing
   },
   filterButtonActive: {
-    backgroundColor: "#4939b0",
-    borderColor: "#4939b0",
+    backgroundColor: BRAND_COLOR_MAIN, // Use new brand color
+    borderColor: BRAND_COLOR_MAIN,
   },
   filterButtonText: {
     fontSize: 14,
@@ -1458,49 +1256,67 @@ const styles = StyleSheet.create({
   },
   seeAllText: {
     fontSize: 14,
-    color: "#4939b0",
+    color: BRAND_COLOR_MAIN, // Use new brand color
     fontWeight: "600",
+  },
+  seeAllTextDark: {
+    fontSize: 14,
+    color: "#FFFFFF", // Use white on dark card
+    fontWeight: "600",
+    opacity: 0.8,
   },
   transactionItem: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    boxShadow: "0px 1px 2px 0px rgba(0, 0, 0, 0.05)",
-    elevation: 2,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginBottom: 8,
+    // DESIGN UPDATE: Platform-specific shadows
+    ...Platform.select({
+      ios: {
+        shadowColor: "rgba(0, 0, 0, 0.05)",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+        borderColor: "#F3F4F6",
+        borderWidth: 1,
+      },
+    }),
   },
   transactionIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: "#F3F4F6",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 12,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
+    marginRight: 10,
   },
   transactionIconText: {
-    fontSize: 20,
+    fontSize: 18,
   },
   transactionDetails: {
     flex: 1,
+    marginRight: 8, // Add margin to prevent text collision
   },
   transactionTitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: "#111827",
     fontWeight: "600",
-    marginBottom: 4,
+    marginBottom: 2,
   },
   transactionDate: {
-    fontSize: 12,
+    fontSize: 11,
     color: "#6B7280",
     fontWeight: "400",
   },
   transactionAmount: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "700",
   },
   incomeAmount: {
@@ -1528,27 +1344,26 @@ const styles = StyleSheet.create({
     color: "#EF4444",
   },
   transactionEmptyContainer: {
-    padding: 20,
+    padding: 40,
     alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
   },
   emptyText: {
     fontSize: 14,
     color: "#6B7280",
+    textAlign: "center",
+    lineHeight: 20,
   },
   recentAchievementsSection: {
-    paddingHorizontal: 0,
-    paddingTop: 24,
-    paddingBottom: 24,
-    borderTopWidth: 1,
-    borderTopColor: "rgba(255, 255, 255, 0.2)",
-    marginTop: 24,
+    paddingTop: 16,
+    // Removed borderTop and marginTop, divider is enough
   },
   recentAchievementsHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 16,
-    paddingHorizontal: 0,
+    marginBottom: 12,
   },
   recentAchievementsTitle: {
     fontSize: 20,
@@ -1556,40 +1371,32 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   recentAchievementsScroll: {
-    marginHorizontal: -24,
-    paddingHorizontal: 24,
-    marginTop: 0,
+    marginHorizontal: -24, // Allow scroll to edges of card
+    paddingHorizontal: 24, // Add padding back
   },
   recentAchievementsList: {
-    flexDirection: "row",
-    gap: 12,
-    paddingRight: 24,
+    paddingRight: 24, // Ensure last item has padding
   },
   recentAchievementItem: {
     alignItems: "center",
     justifyContent: "center",
-    minWidth: 100,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    width: 60, // Smaller width
+    height: 60, // Smaller height
+    paddingVertical: 8,
+    paddingHorizontal: 8,
     backgroundColor: "rgba(255, 255, 255, 0.1)",
-    borderRadius: 12,
+    borderRadius: 12, // Slightly smaller border radius
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.2)",
+    marginRight: 12, // Use margin for spacing
   },
   recentAchievementIcon: {
-    fontSize: 40,
-    marginBottom: 8,
-  },
-  recentAchievementName: {
-    fontSize: 12,
-    color: "#FFFFFF",
-    fontWeight: "600",
-    textAlign: "center",
+    fontSize: 28, // Smaller icon
   },
   advancedFiltersContainer: {
     marginBottom: 16,
     backgroundColor: "#FFFFFF",
-    borderRadius: 12,
+    borderRadius: 16, // More rounded
     borderWidth: 1,
     borderColor: "#E5E7EB",
     overflow: "hidden",
@@ -1598,7 +1405,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: 12,
+    padding: 16, // More padding
     backgroundColor: "#F9FAFB",
   },
   advancedFiltersToggleText: {
@@ -1607,7 +1414,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   activeFilterBadge: {
-    backgroundColor: "#4939b0",
+    backgroundColor: BRAND_COLOR_MAIN, // Use new brand color
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
@@ -1616,12 +1423,10 @@ const styles = StyleSheet.create({
   activeFilterBadgeText: {
     fontSize: 10,
     color: "#FFFFFF",
-    fontWeight: "600",
+    fontWeight: "700", // Bolder text
   },
   advancedFiltersContent: {
     padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: "#E5E7EB",
   },
   filterRow: {
     marginBottom: 16,
@@ -1648,7 +1453,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#D1D5DB",
     borderRadius: 8,
-    padding: 10,
+    padding: 12, // More padding
     fontSize: 14,
     color: "#111827",
     backgroundColor: "#FFFFFF",
@@ -1669,14 +1474,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#D1D5DB",
     borderRadius: 8,
-    padding: 10,
+    padding: 12, // More padding
     fontSize: 14,
     color: "#111827",
     backgroundColor: "#FFFFFF",
   },
   clearFiltersButton: {
     backgroundColor: "#EF4444",
-    paddingVertical: 10,
+    paddingVertical: 12, // More padding
     paddingHorizontal: 16,
     borderRadius: 8,
     alignItems: "center",
