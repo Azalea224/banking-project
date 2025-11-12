@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, Platform } from "react
 import { useSegments, useRouter, usePathname } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../contexts/AuthContext";
+import { BRAND_COLOR_MAIN } from "./AnimatedBackground";
 
 interface NavItem {
   id: string;
@@ -17,36 +18,36 @@ const navItems: NavItem[] = [
     id: "home",
     label: "Home",
     route: "/",
-    icon: "🏠",
-    isImage: false,
+    icon: require("../assets/home.png"),
+    isImage: true,
   },
   {
     id: "level",
-    label: "Level",
+    label: "Progress",
     route: "/level",
-    icon: "🏆",
-    isImage: false,
+    icon: require("../assets/Progress.png"),
+    isImage: true,
   },
   {
     id: "transactions",
     label: "Transactions",
     route: "/transactions",
-    icon: "📊",
-    isImage: false,
+    icon: require("../assets/Transactions.png"),
+    isImage: true,
   },
   {
     id: "friends",
     label: "Friends",
     route: "/friends",
-    icon: "👥",
-    isImage: false,
+    icon: require("../assets/Friends.png"),
+    isImage: true,
   },
   {
     id: "profile",
     label: "Profile",
     route: "/profile",
-    icon: "👤",
-    isImage: false,
+    icon: require("../assets/Profile.png"),
+    isImage: true,
   },
 ];
 
@@ -94,8 +95,11 @@ export default function BottomNav() {
   return (
     <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 8) }]}>
       {navItems.map((item) => {
-        const isActive = pathname === item.route || 
-          (item.route === "/" && (pathname === "/" || pathname === ""));
+        const isActive = 
+          pathname === item.route || 
+          pathname.startsWith(item.route + "/") ||
+          (item.route === "/" && (pathname === "/" || pathname === "")) ||
+          (item.route === "/profile" && pathname === "/profile");
         
         return (
           <TouchableOpacity
@@ -104,18 +108,24 @@ export default function BottomNav() {
             onPress={() => handleNavigation(item.route)}
             activeOpacity={0.7}
           >
-            <View style={[styles.iconContainer, isActive && styles.iconContainerActive]}>
-              {item.isImage ? (
-                <Image
-                  source={item.icon}
-                  style={styles.iconImage}
-                  resizeMode="contain"
-                />
-              ) : (
-                <Text style={[styles.iconText, isActive && styles.iconTextActive]}>
-                  {item.icon}
-                </Text>
-              )}
+            {isActive && <View style={styles.navItemHighlight} />}
+            <View style={styles.navItemContent}>
+              <View style={styles.iconContainer}>
+                {item.isImage ? (
+                  <Image
+                    source={item.icon}
+                    style={[
+                      styles.iconImage,
+                      item.id === "friends" && styles.friendsIconImage,
+                    ]}
+                    resizeMode="contain"
+                  />
+                ) : (
+                  <Text style={[styles.iconText, isActive && styles.iconTextActive]}>
+                    {item.icon}
+                  </Text>
+                )}
+              </View>
             </View>
             <Text style={[styles.label, isActive && styles.labelActive]}>
               {item.label}
@@ -157,21 +167,37 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 4,
+    position: "relative",
   },
   navItemActive: {
     // Active state styling
   },
+  navItemContent: {
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 4,
+    zIndex: 1,
+  },
+  navItemHighlight: {
+    position: "absolute",
+    width: "95%",
+    height: "150%",
+    borderRadius: 20,
+    backgroundColor: BRAND_COLOR_MAIN,
+    opacity: 0.15,
+    zIndex: 0,
+    top: -6,
+    left: "2.5%",
+  },
   iconContainer: {
-    width: 32,
-    height: 32,
+    width: 36,
+    height: 36,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 4,
-    borderRadius: 16,
+    borderRadius: 18,
     backgroundColor: "transparent",
-  },
-  iconContainerActive: {
-    backgroundColor: "#F3F4F6",
+    zIndex: 1,
   },
   iconText: {
     fontSize: 20,
@@ -180,8 +206,12 @@ const styles = StyleSheet.create({
     // Icon stays the same for active state
   },
   iconImage: {
-    width: 24,
-    height: 24,
+    width: 33,
+    height: 33,
+  },
+  friendsIconImage: {
+    width: 38,
+    height: 38,
   },
   label: {
     fontSize: 10,

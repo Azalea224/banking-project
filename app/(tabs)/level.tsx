@@ -15,9 +15,6 @@ import {
   Image,
   Modal,
   Platform,
-  Animated, // Import Animated
-  Easing, // Import Easing
-  Dimensions, // Import Dimensions
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
@@ -28,124 +25,11 @@ import { getMyTransactions, Transaction } from "../../api/transactions";
 import { getMyProfile, UserProfile } from "../../api/auth";
 import { useGamification, Achievement } from "../../hooks/useGamification";
 import BottomNav from "../../components/BottomNav";
-
-// --- DESIGN UPDATE ---
-// Using new brand colors
-const BRAND_COLOR_MAIN = "#5b63e8";
-const BRAND_COLOR_SECONDARY = "#263367";
-const BRAND_COLOR_LIGHT_BG = "rgba(91, 99, 232, 0.1)"; // Main color with 10% opacity
-const BRAND_COLOR_DARK_BG = "rgba(38, 51, 103, 0.1)"; // Secondary color with 10% opacity
-// --- END DESIGN UPDATE ---
+import { AnimatedBackground, BRAND_COLOR_MAIN, BRAND_COLOR_SECONDARY, BRAND_COLOR_LIGHT_BG, BRAND_COLOR_DARK_BG } from "../../components/AnimatedBackground";
 
 type AchievementFilter = "unlocked" | "locked" | null;
 
 const BASE_URL = "https://react-bank-project.eapi.joincoded.com";
-
-// --- CREATIVE UPDATE: Animated Background Component ---
-const { width, height } = Dimensions.get("window");
-
-const AnimatedBackground = () => {
-  const anim1 = useRef(new Animated.Value(0)).current;
-  const anim2 = useRef(new Animated.Value(0)).current;
-  const anim3 = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const createAnimation = (anim: Animated.Value) => {
-      return Animated.loop(
-        Animated.sequence([
-          Animated.timing(anim, {
-            toValue: 1,
-            duration: 15000 + Math.random() * 5000,
-            useNativeDriver: true,
-            easing: Easing.inOut(Easing.ease),
-          }),
-          Animated.timing(anim, {
-            toValue: 0,
-            duration: 15000 + Math.random() * 5000,
-            useNativeDriver: true,
-            easing: Easing.inOut(Easing.ease),
-          }),
-        ])
-      );
-    };
-
-    createAnimation(anim1).start();
-    createAnimation(anim2).start();
-    createAnimation(anim3).start();
-  }, [anim1, anim2, anim3]);
-
-  const orb1Style = {
-    transform: [
-      {
-        translateY: anim1.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0, -100],
-        }),
-      },
-      {
-        translateX: anim1.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0, 50],
-        }),
-      },
-    ],
-    opacity: anim1.interpolate({
-      inputRange: [0, 0.5, 1],
-      outputRange: [0.8, 1, 0.8],
-    }),
-  };
-
-  const orb2Style = {
-    transform: [
-      {
-        translateY: anim2.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0, 100],
-        }),
-      },
-      {
-        translateX: anim2.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0, -50],
-        }),
-      },
-    ],
-    opacity: anim2.interpolate({
-      inputRange: [0, 0.5, 1],
-      outputRange: [0.7, 1, 0.7],
-    }),
-  };
-
-  const orb3Style = {
-    transform: [
-      {
-        translateY: anim3.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0, -50],
-        }),
-      },
-      {
-        translateX: anim3.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0, 80],
-        }),
-      },
-    ],
-    opacity: anim3.interpolate({
-      inputRange: [0, 0.5, 1],
-      outputRange: [0.6, 0.9, 0.6],
-    }),
-  };
-
-  return (
-    <View style={styles.animatedBgContainer}>
-      <Animated.View style={[styles.orb, styles.orb1, orb1Style]} />
-      <Animated.View style={[styles.orb, styles.orb2, orb2Style]} />
-      <Animated.View style={[styles.orb, styles.orb3, orb3Style]} />
-    </View>
-  );
-};
-// --- END CREATIVE UPDATE ---
 
 export default function LevelPage() {
   const params = useLocalSearchParams<{ filter: string | string[] }>();
@@ -268,7 +152,11 @@ export default function LevelPage() {
                   {/* Total Points Info */}
                   <View style={styles.totalPointsContainer}>
                     <View style={styles.totalPointsIconContainer}>
-                      <Text style={styles.totalPointsIcon}>💎</Text>
+                      <Image
+                        source={require("../../assets/Total Points.png")}
+                        style={styles.totalPointsIcon}
+                        resizeMode="contain"
+                      />
                     </View>
                     <View style={styles.totalPointsTextContainer}>
                       <Text style={styles.totalPointsValue}>
@@ -285,7 +173,11 @@ export default function LevelPage() {
             <View style={styles.xpContainer}>
               <View style={styles.xpHeader}>
                 <View style={styles.xpIconContainer}>
-                  <Text style={styles.xpIcon}>⚡</Text>
+                  <Image
+                    source={require("../../assets/Experience.png")}
+                    style={styles.xpIcon}
+                    resizeMode="contain"
+                  />
                 </View>
                 <View style={styles.xpInfo}>
                   <Text style={styles.xpLabel}>Experience Points</Text>
@@ -334,7 +226,11 @@ export default function LevelPage() {
               {/* Next Level Info */}
               <View style={styles.nextLevelContainer}>
                 <View style={styles.nextLevelIcon}>
-                  <Text style={styles.nextLevelIconText}>🎯</Text>
+                  <Image
+                    source={require("../../assets/Next Level Target.png")}
+                    style={styles.nextLevelIconImage}
+                    resizeMode="contain"
+                  />
                 </View>
                 <Text style={styles.xpToNext} numberOfLines={2}>
                   {xpNeeded > 0 ? (
@@ -343,7 +239,14 @@ export default function LevelPage() {
                       reach Level {gamification.level + 1}
                     </>
                   ) : (
-                    "🏆 Max Level Achieved!"
+                    <View style={styles.maxLevelContainer}>
+                      <Image
+                        source={require("../../assets/Max Level.png")}
+                        style={styles.maxLevelIcon}
+                        resizeMode="contain"
+                      />
+                      <Text style={styles.maxLevelText}>Max Level Achieved!</Text>
+                    </View>
                   )}
                 </Text>
               </View>
@@ -416,9 +319,15 @@ export default function LevelPage() {
           {filteredAchievements.length === 0 ? (
             <View style={styles.emptyContainer}>
               {/* DESIGN FIX: Added an icon for a friendlier empty state */}
-              <Text style={styles.emptyIcon}>
-                {filter === "unlocked" ? "🗺️" : "🔒"}
-              </Text>
+              <Image
+                source={
+                  filter === "unlocked"
+                    ? require("../../assets/Empty State (Unlocked).png")
+                    : require("../../assets/Empty State (Locked).png")
+                }
+                style={styles.emptyIcon}
+                resizeMode="contain"
+              />
               <Text style={styles.emptyText}>
                 {filter === "unlocked"
                   ? "No unlocked achievements yet.\nKeep playing to earn them!"
@@ -430,7 +339,7 @@ export default function LevelPage() {
           ) : (
             <ScrollView
               style={styles.achievementsScrollView}
-              showsVerticalScrollIndicator={true}
+              showsVerticalScrollIndicator={false}
               nestedScrollEnabled={true}
             >
               <View style={styles.achievementsList}>
@@ -451,12 +360,24 @@ export default function LevelPage() {
                         styles.achievementIconContainerLocked,
                     ]}
                   >
-                    <Text style={styles.achievementIcon}>
-                      {achievement.icon}
-                    </Text>
+                    {typeof achievement.icon === "string" ? (
+                      <Text style={styles.achievementIcon}>
+                        {achievement.icon}
+                      </Text>
+                    ) : (
+                      <Image
+                        source={achievement.icon}
+                        style={styles.achievementIconImage}
+                        resizeMode="contain"
+                      />
+                    )}
                     {!achievement.unlocked && (
                       <View style={styles.lockOverlay}>
-                        <Text style={styles.lockIcon}>🔒</Text>
+                        <Image
+                          source={require("../../assets/Lock.png")}
+                          style={styles.lockIcon}
+                          resizeMode="contain"
+                        />
                       </View>
                     )}
                   </View>
@@ -504,7 +425,11 @@ export default function LevelPage() {
                   </View>
                   {achievement.unlocked && (
                     <View style={styles.unlockedBadge}>
-                      <Text style={styles.unlockedBadgeText}>🏆</Text>
+                      <Image
+                        source={require("../../assets/Unlocked Badge.png")}
+                        style={styles.unlockedBadgeImage}
+                        resizeMode="contain"
+                      />
                     </View>
                   )}
                 </TouchableOpacity>
@@ -527,14 +452,26 @@ export default function LevelPage() {
             {selectedAchievement && (
               <>
                 <View style={styles.modalHeader}>
-                  <Text style={styles.modalIcon}>
-                    {selectedAchievement.icon}
-                  </Text>
+                  {typeof selectedAchievement.icon === "string" ? (
+                    <Text style={styles.modalIcon}>
+                      {selectedAchievement.icon}
+                    </Text>
+                  ) : (
+                    <Image
+                      source={selectedAchievement.icon}
+                      style={styles.modalIconImage}
+                      resizeMode="contain"
+                    />
+                  )}
                   <TouchableOpacity
                     style={styles.modalCloseButton}
                     onPress={() => setModalVisible(false)}
                   >
-                    <Text style={styles.modalCloseText}>×</Text>
+                    <Image
+                      source={require("../../assets/Close.png")}
+                      style={styles.modalCloseImage}
+                      resizeMode="contain"
+                    />
                   </TouchableOpacity>
                 </View>
                 <Text style={styles.modalTitle}>
@@ -563,22 +500,39 @@ export default function LevelPage() {
                     {selectedAchievement.maxProgress}
                   </Text>
                 </View>
-                <View
-                  style={[
-                    styles.modalStatusBadge,
-                    selectedAchievement.unlocked &&
-                      styles.modalStatusBadgeUnlocked,
-                  ]}
-                >
-                  <Text
+                  <View
                     style={[
-                      styles.modalStatusText,
+                      styles.modalStatusBadge,
                       selectedAchievement.unlocked &&
-                        styles.modalStatusTextUnlocked,
+                        styles.modalStatusBadgeUnlocked,
                     ]}
-                  >
-                    {selectedAchievement.unlocked ? "✓ Unlocked" : "🔒 Locked"}
-                  </Text>
+                >
+                  {selectedAchievement.unlocked ? (
+                    <View style={styles.modalStatusUnlockedContainer}>
+                      <Image
+                        source={require("../../assets/Checkmark.png")}
+                        style={styles.modalCheckmark}
+                        resizeMode="contain"
+                      />
+                      <Text
+                        style={[
+                          styles.modalStatusText,
+                          styles.modalStatusTextUnlocked,
+                        ]}
+                      >
+                        Unlocked
+                      </Text>
+                    </View>
+                  ) : (
+                    <View style={styles.modalStatusLockedContainer}>
+                      <Image
+                        source={require("../../assets/Lock.png")}
+                        style={styles.modalLockIcon}
+                        resizeMode="contain"
+                      />
+                      <Text style={styles.modalStatusText}>Locked</Text>
+                    </View>
+                  )}
                 </View>
               </>
             )}
@@ -599,38 +553,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F5F7FA",
   },
-  // --- CREATIVE UPDATE: Animated Background Styles ---
-  animatedBgContainer: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 0,
-    overflow: "hidden",
-  },
-  orb: {
-    position: "absolute",
-    borderRadius: 500,
-  },
-  orb1: {
-    width: 300,
-    height: 300,
-    top: -100,
-    left: -50,
-    backgroundColor: BRAND_COLOR_LIGHT_BG,
-  },
-  orb2: {
-    width: 400,
-    height: 400,
-    top: height * 0.2,
-    right: -150,
-    backgroundColor: BRAND_COLOR_DARK_BG,
-  },
-  orb3: {
-    width: 250,
-    height: 250,
-    bottom: -80,
-    left: 20,
-    backgroundColor: BRAND_COLOR_LIGHT_BG,
-  },
-  // --- END CREATIVE UPDATE ---
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
@@ -646,20 +568,20 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
   profileCard: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: BRAND_COLOR_SECONDARY,
     borderRadius: 24,
-    padding: 24,
+    padding: 18,
     alignItems: "center",
     // DESIGN FIX: Replaced web 'boxShadow' with proper RN shadows
     ...Platform.select({
       ios: {
-        shadowColor: BRAND_COLOR_MAIN, // Use brand color for shadow
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.1,
-        shadowRadius: 15,
+        shadowColor: BRAND_COLOR_SECONDARY,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.3,
+        shadowRadius: 16,
       },
       android: {
-        elevation: 8,
+        elevation: 10,
       },
     }),
     overflow: "hidden",
@@ -746,7 +668,7 @@ const styles = StyleSheet.create({
   profileUsername: {
     fontSize: 24,
     fontWeight: "700",
-    color: "#111827",
+    color: "#FFFFFF",
     marginBottom: 12, // Reduced margin
     zIndex: 1,
   },
@@ -802,12 +724,12 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F9FAFB",
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: "rgba(255, 255, 255, 0.2)",
     minHeight: 80, // Kept minHeight to match
     minWidth: 0, // Allow flex to shrink if needed
   },
@@ -821,7 +743,8 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   totalPointsIcon: {
-    fontSize: 24,
+    width: 28,
+    height: 28,
   },
   totalPointsTextContainer: {
     flex: 1,
@@ -831,13 +754,13 @@ const styles = StyleSheet.create({
   totalPointsValue: {
     fontSize: 20,
     fontWeight: "800",
-    color: BRAND_COLOR_MAIN, // Use new brand color
+    color: "#FFFFFF", // White for dark bg
     lineHeight: 24,
   },
   totalPointsLabel: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#6B7280",
+    color: "#D1D5DB", // Lighter gray for dark bg
     marginTop: 0,
     lineHeight: 16,
   },
@@ -862,7 +785,8 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   xpIcon: {
-    fontSize: 24,
+    width: 28,
+    height: 28,
   },
   xpInfo: {
     flex: 1,
@@ -873,12 +797,12 @@ const styles = StyleSheet.create({
   xpLabel: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#6B7280",
+    color: "#D1D5DB", // Lighter gray for dark bg
   },
   xpValue: {
     fontSize: 18,
     fontWeight: "800",
-    color: BRAND_COLOR_MAIN, // Use new brand color
+    color: "#FFFFFF", // White for dark bg
   },
   xpProgressBarContainer: {
     marginBottom: 12, // Increased margin
@@ -968,10 +892,10 @@ const styles = StyleSheet.create({
     marginTop: 4,
     paddingVertical: 10,
     paddingHorizontal: 16,
-    backgroundColor: "#F9FAFB",
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: "rgba(255, 255, 255, 0.2)",
   },
   nextLevelIcon: {
     width: 32,
@@ -980,12 +904,28 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginRight: 8,
   },
-  nextLevelIconText: {
-    fontSize: 20,
+  nextLevelIconImage: {
+    width: 23,
+    height: 23,
+  },
+  maxLevelContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  maxLevelIcon: {
+    width: 23,
+    height: 23,
+    marginRight: 6,
+  },
+  maxLevelText: {
+    fontSize: 13,
+    color: "#FFFFFF",
+    fontWeight: "700",
   },
   xpToNext: {
     fontSize: 13,
-    color: "#6B7280",
+    color: "#D1D5DB", // Lighter gray for dark bg
     textAlign: "center",
     fontWeight: "500",
     flex: 1,
@@ -993,7 +933,7 @@ const styles = StyleSheet.create({
   xpToNextBold: {
     fontSize: 14,
     fontWeight: "700",
-    color: BRAND_COLOR_MAIN, // Use new brand color
+    color: "#FFFFFF", // White for dark bg
   },
   achievementsSection: {
     paddingHorizontal: 20,
@@ -1106,6 +1046,10 @@ const styles = StyleSheet.create({
   achievementIcon: {
     fontSize: 32, // Reduced from 36
   },
+  achievementIconImage: {
+    width: 37,
+    height: 37,
+  },
   lockOverlay: {
     position: "absolute",
     width: "100%",
@@ -1116,7 +1060,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   lockIcon: {
-    fontSize: 28,
+    width: 32,
+    height: 32,
     opacity: 0.8,
   },
   achievementDetails: {
@@ -1194,6 +1139,10 @@ const styles = StyleSheet.create({
     fontSize: 18, // Reduced from 20
     fontWeight: "700",
   },
+  unlockedBadgeImage: {
+    width: 21,
+    height: 21,
+  },
   emptyContainer: {
     padding: 40,
     alignItems: "center",
@@ -1203,7 +1152,8 @@ const styles = StyleSheet.create({
   },
   // DESIGN FIX: Added icon style
   emptyIcon: {
-    fontSize: 48,
+    width: 55,
+    height: 55,
     marginBottom: 16,
     opacity: 0.7,
   },
@@ -1250,6 +1200,11 @@ const styles = StyleSheet.create({
     fontSize: 64,
     marginRight: 16, // Add space
   },
+  modalIconImage: {
+    width: 74,
+    height: 74,
+    marginRight: 16,
+  },
   modalCloseButton: {
     width: 32,
     height: 32,
@@ -1264,6 +1219,30 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     lineHeight: 28, // Fix for 'x' alignment
     marginTop: -2, // Pixel-push alignment
+  },
+  modalCloseImage: {
+    width: 23,
+    height: 23,
+  },
+  modalStatusUnlockedContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalCheckmark: {
+    width: 18,
+    height: 18,
+    marginRight: 4,
+  },
+  modalStatusLockedContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalLockIcon: {
+    width: 18,
+    height: 18,
+    marginRight: 4,
   },
   modalTitle: {
     fontSize: 24,

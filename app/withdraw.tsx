@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
   Keyboard,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
@@ -18,6 +19,7 @@ import { withdraw, WithdrawResponse } from "../api/transactions";
 import { getMyProfile, UserProfile } from "../api/auth";
 import { useAuth } from "../contexts/AuthContext";
 import { router } from "expo-router";
+import { AnimatedBackground, BRAND_COLOR_MAIN } from "../components/AnimatedBackground";
 
 const withdrawValidationSchema = Yup.object().shape({
   amount: Yup.string()
@@ -197,26 +199,27 @@ export default function WithdrawPage() {
     return (
       <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4939b0" />
+          <ActivityIndicator size="large" color={BRAND_COLOR_MAIN} />
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
-      <StatusBar style="dark" />
+      <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+        <StatusBar style="dark" />
+        <AnimatedBackground />
       <View style={styles.content}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <Text style={styles.backButtonIcon}>←</Text>
-          </TouchableOpacity>
-          <Text style={styles.title}>Withdraw from Account</Text>
-          <View style={styles.placeholder} />
-        </View>
+          <View style={styles.header}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => router.back()}
+            >
+              <Text style={styles.backButtonIcon}>←</Text>
+            </TouchableOpacity>
+            <Text style={styles.title}>Withdraw from Account</Text>
+            <View style={styles.placeholder} />
+          </View>
 
         <Formik
           initialValues={{ amount: "" }}
@@ -237,7 +240,7 @@ export default function WithdrawPage() {
                 <View style={styles.balanceInfo}>
                   <Text style={styles.balanceLabel}>Available Balance</Text>
                   {profileLoading ? (
-                    <ActivityIndicator size="small" color="#4939b0" />
+                    <ActivityIndicator size="small" color={BRAND_COLOR_MAIN} />
                   ) : (
                     <Text style={styles.balanceAmount}>
                       {profile?.balance?.toFixed(3) || "0.000"} KWD
@@ -307,7 +310,7 @@ export default function WithdrawPage() {
                   }
                 >
                   {withdrawMutation.isPending ? (
-                    <ActivityIndicator color="#4939b0" />
+                    <ActivityIndicator color={BRAND_COLOR_MAIN} />
                   ) : (
                     <Text style={styles.withdrawAllButtonText}>
                       Withdraw All
@@ -329,6 +332,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F5F7FA",
   },
   content: {
+    zIndex: 1,
     flex: 1,
   },
   header: {
@@ -344,6 +348,8 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: "center",
     alignItems: "center",
+    borderRadius: 20,
+    backgroundColor: "#FFFFFF",
   },
   backButtonIcon: {
     fontSize: 24,
@@ -414,7 +420,7 @@ const styles = StyleSheet.create({
     marginTop: "auto",
   },
   withdrawButton: {
-    backgroundColor: "#4939b0",
+    backgroundColor: BRAND_COLOR_MAIN,
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: "center",
@@ -439,14 +445,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginTop: 12,
     borderWidth: 2,
-    borderColor: "#4939b0",
+    borderColor: BRAND_COLOR_MAIN,
   },
   withdrawAllButtonDisabled: {
     opacity: 0.6,
     borderColor: "#9CA3AF",
   },
   withdrawAllButtonText: {
-    color: "#4939b0",
+    color: BRAND_COLOR_MAIN,
     fontSize: 16,
     fontWeight: "700",
   },

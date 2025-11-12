@@ -48,14 +48,7 @@ export default function UsersPage() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => router.back()}
-            >
-              <Text style={styles.backButtonIcon}>←</Text>
-            </TouchableOpacity>
             <Skeleton width={100} height={24} borderRadius={4} />
-            <View style={styles.placeholder} />
           </View>
           <View style={styles.usersList}>
             {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
@@ -93,14 +86,7 @@ export default function UsersPage() {
       <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
         <StatusBar style="dark" />
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <Text style={styles.backButtonIcon}>←</Text>
-          </TouchableOpacity>
           <Text style={styles.title}>Users</Text>
-          <View style={styles.placeholder} />
         </View>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Failed to load users</Text>
@@ -109,12 +95,6 @@ export default function UsersPage() {
             onPress={() => refetch()}
           >
             <Text style={styles.retryButtonText}>Retry</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.backButtonText}
-            onPress={() => router.back()}
-          >
-            <Text style={styles.backButtonTextStyle}>Go Back</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -125,14 +105,7 @@ export default function UsersPage() {
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <StatusBar style="dark" />
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Text style={styles.backButtonIcon}>←</Text>
-        </TouchableOpacity>
         <Text style={styles.title}>All Users</Text>
-        <View style={styles.placeholder} />
       </View>
 
       <ScrollView
@@ -221,24 +194,10 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 10,
   },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  backButtonIcon: {
-    fontSize: 24,
-    color: "#111827",
-    fontWeight: "600",
-  },
   title: {
     fontSize: 24,
     fontWeight: "700",
     color: "#111827",
-  },
-  placeholder: {
-    width: 40,
   },
   userCard: {
     flexDirection: "row",
@@ -301,15 +260,6 @@ const styles = StyleSheet.create({
   },
   retryButtonText: {
     color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
-    textAlign: "center",
-  },
-  backButtonText: {
-    marginTop: 8,
-  },
-  backButtonTextStyle: {
-    color: "#4939b0",
     fontSize: 16,
     fontWeight: "600",
     textAlign: "center",

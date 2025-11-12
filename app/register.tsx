@@ -187,7 +187,11 @@ export default function RegisterPage() {
                   />
                 ) : (
                   <View style={styles.imagePlaceholder}>
-                    <Text style={styles.imagePlaceholderText}>📷</Text>
+                    <Image
+                      source={require("../assets/Camera.png")}
+                      style={styles.imagePlaceholderIcon}
+                      resizeMode="contain"
+                    />
                     <Text style={styles.imagePlaceholderLabel}>Add Photo</Text>
                   </View>
                 )}
@@ -324,8 +328,9 @@ const styles = StyleSheet.create({
     borderColor: "#D1D5DB",
     borderStyle: "dashed",
   },
-  imagePlaceholderText: {
-    fontSize: 40,
+  imagePlaceholderIcon: {
+    width: 46,
+    height: 46,
     marginBottom: 8,
   },
   imagePlaceholderLabel: {

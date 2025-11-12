@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
   Keyboard,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
@@ -18,6 +19,7 @@ import { deposit, DepositResponse } from "../api/transactions";
 import { useAuth } from "../contexts/AuthContext";
 import { router } from "expo-router";
 import { useSound } from "../hooks/useSound";
+import { AnimatedBackground, BRAND_COLOR_MAIN } from "../components/AnimatedBackground";
 
 const depositValidationSchema = Yup.object().shape({
   amount: Yup.string()
@@ -154,15 +156,16 @@ export default function DepositPage() {
     return (
       <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4939b0" />
+          <ActivityIndicator size="large" color={BRAND_COLOR_MAIN} />
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
-      <StatusBar style="dark" />
+      <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+        <StatusBar style="dark" />
+        <AnimatedBackground />
       <View style={styles.content}>
         <View style={styles.header}>
           <TouchableOpacity
@@ -247,6 +250,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F5F7FA",
   },
   content: {
+    zIndex: 1,
     flex: 1,
   },
   header: {
@@ -262,6 +266,8 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: "center",
     alignItems: "center",
+    borderRadius: 20,
+    backgroundColor: "#FFFFFF",
   },
   backButtonIcon: {
     fontSize: 24,
@@ -313,7 +319,7 @@ const styles = StyleSheet.create({
     marginTop: "auto",
   },
   depositButton: {
-    backgroundColor: "#4939b0",
+    backgroundColor: BRAND_COLOR_MAIN,
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: "center",

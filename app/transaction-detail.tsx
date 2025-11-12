@@ -383,14 +383,7 @@ export default function TransactionDetailPage() {
     return (
       <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <Text style={styles.backButtonIcon}>←</Text>
-          </TouchableOpacity>
           <Text style={styles.title}>Transaction Details</Text>
-          <View style={styles.placeholder} />
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#4939b0" />
@@ -404,14 +397,7 @@ export default function TransactionDetailPage() {
     return (
       <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <Text style={styles.backButtonIcon}>←</Text>
-          </TouchableOpacity>
           <Text style={styles.title}>Transaction Details</Text>
-          <View style={styles.placeholder} />
         </View>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Transaction not found</Text>

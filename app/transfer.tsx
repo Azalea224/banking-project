@@ -10,6 +10,7 @@ import {
   Image,
   Keyboard,
   ScrollView,
+  Platform,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
@@ -21,6 +22,7 @@ import { transfer, TransferResponse } from "../api/transactions";
 import { useAuth } from "../contexts/AuthContext";
 import { router, useLocalSearchParams } from "expo-router";
 import { useSound } from "../hooks/useSound";
+import { AnimatedBackground, BRAND_COLOR_MAIN } from "../components/AnimatedBackground";
 
 const transferValidationSchema = Yup.object().shape({
   amount: Yup.string()
@@ -216,6 +218,7 @@ export default function TransferPage() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+      <AnimatedBackground />
       <StatusBar style="dark" />
       <View style={styles.mainContainer}>
         <View style={styles.header}>
@@ -248,14 +251,14 @@ export default function TransferPage() {
               <ScrollView
                 style={styles.recipientScrollView}
                 contentContainerStyle={styles.recipientScrollContent}
-                showsVerticalScrollIndicator={true}
+                showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
               >
                 <View style={styles.recipientCard}>
                   <Text style={styles.cardTitle}>Select Recipient</Text>
                   {usersLoading ? (
                     <View style={styles.loadingContainer}>
-                      <ActivityIndicator size="small" color="#4939b0" />
+                      <ActivityIndicator size="small" color={BRAND_COLOR_MAIN} />
                       <Text style={styles.loadingText}>Loading users...</Text>
                     </View>
                   ) : usersError ? (
@@ -264,7 +267,11 @@ export default function TransferPage() {
                     </View>
                   ) : filteredUsers.length === 0 ? (
                     <View style={styles.emptyContainer}>
-                      <Text style={styles.emptyIcon}>👤</Text>
+                      <Image
+                        source={require("../assets/Empty State (Unlocked).png")}
+                        style={styles.emptyIcon}
+                        resizeMode="contain"
+                      />
                       <Text style={styles.emptyText}>
                         {searchQuery
                           ? "No users found"
@@ -332,7 +339,11 @@ export default function TransferPage() {
                           </View>
                             {isSelected && (
                               <View style={styles.checkmarkContainer}>
-                                <Text style={styles.checkmark}>✓</Text>
+                                <Image
+                                  source={require("../assets/Checkmark.png")}
+                                  style={styles.checkmark}
+                                  resizeMode="contain"
+                                />
                               </View>
                             )}
                           </TouchableOpacity>
@@ -348,7 +359,11 @@ export default function TransferPage() {
                 {/* Search Bar */}
                 <View style={styles.searchCard}>
                   <View style={styles.searchContainer}>
-                    <Text style={styles.searchIcon}>🔍</Text>
+                    <Image
+                      source={require("../assets/Search.png")}
+                      style={styles.searchIcon}
+                      resizeMode="contain"
+                    />
                     <TextInput
                       style={styles.searchInput}
                       placeholder="Search by username"
@@ -515,6 +530,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F5F7FA",
   },
   mainContainer: {
+    zIndex: 1,
     flex: 1,
   },
   recipientScrollView: {
@@ -540,7 +556,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   backButtonIcon: {
-    fontSize: 20,
+    fontSize: 24,
     color: "#111827",
     fontWeight: "600",
   },
@@ -622,8 +638,8 @@ const styles = StyleSheet.create({
     borderColor: "#E5E7EB",
   },
   quickAmountButtonActive: {
-    backgroundColor: "#4939b0",
-    borderColor: "#4939b0",
+    backgroundColor: BRAND_COLOR_MAIN,
+    borderColor: BRAND_COLOR_MAIN,
   },
   quickAmountText: {
     fontSize: 12,
@@ -675,7 +691,8 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   searchIcon: {
-    fontSize: 18,
+    width: 21,
+    height: 21,
     marginRight: 12,
   },
   searchInput: {
@@ -712,7 +729,7 @@ const styles = StyleSheet.create({
     borderColor: "transparent",
   },
   userItemSelected: {
-    borderColor: "#4939b0",
+    borderColor: BRAND_COLOR_MAIN,
     backgroundColor: "#EEF2FF",
     borderWidth: 2,
     boxShadow: "0px 2px 8px 0px rgba(73, 57, 176, 0.25)",
@@ -727,13 +744,13 @@ const styles = StyleSheet.create({
     borderColor: "transparent",
   },
   userImageSelected: {
-    borderColor: "#4939b0",
+    borderColor: BRAND_COLOR_MAIN,
   },
   userImagePlaceholder: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#4939b0",
+    backgroundColor: BRAND_COLOR_MAIN,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 10,
@@ -741,8 +758,8 @@ const styles = StyleSheet.create({
     borderColor: "transparent",
   },
   userImagePlaceholderSelected: {
-    borderColor: "#4939b0",
-    backgroundColor: "#4939b0",
+    borderColor: BRAND_COLOR_MAIN,
+    backgroundColor: BRAND_COLOR_MAIN,
   },
   userImagePlaceholderText: {
     fontSize: 20,
@@ -761,14 +778,14 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   userNameSelected: {
-    color: "#4939b0",
+    color: BRAND_COLOR_MAIN,
     fontWeight: "700",
   },
   checkmarkContainer: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: "#4939b0",
+    backgroundColor: BRAND_COLOR_MAIN,
     justifyContent: "center",
     alignItems: "center",
     marginLeft: 8,
@@ -778,9 +795,8 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   checkmark: {
-    fontSize: 16,
-    color: "#FFFFFF",
-    fontWeight: "700",
+    width: 18,
+    height: 18,
   },
   loadingContainer: {
     padding: 40,
@@ -800,7 +816,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   emptyIcon: {
-    fontSize: 48,
+    width: 55,
+    height: 55,
     marginBottom: 12,
   },
   emptyText: {
@@ -840,7 +857,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "#4939b0",
+    backgroundColor: BRAND_COLOR_MAIN,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 8,
@@ -862,11 +879,11 @@ const styles = StyleSheet.create({
   },
   summaryAmount: {
     fontSize: 18,
-    color: "#4939b0",
+    color: BRAND_COLOR_MAIN,
     fontWeight: "700",
   },
   transferButton: {
-    backgroundColor: "#4939b0",
+    backgroundColor: BRAND_COLOR_MAIN,
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: "center",

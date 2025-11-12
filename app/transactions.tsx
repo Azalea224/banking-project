@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   TextInput,
   Image,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
@@ -18,6 +19,7 @@ import { getMyTransactions, Transaction } from "../api/transactions";
 import { getAllUsers, User, getUserById } from "../api/auth";
 import { Skeleton, SkeletonCircle } from "../components/Skeleton";
 import BottomNav from "../components/BottomNav";
+import { AnimatedBackground, BRAND_COLOR_MAIN } from "../components/AnimatedBackground";
 
 // Format numbers with commas and decimals
 const formatAmount = (amount: number, decimals: number = 3): string => {
@@ -385,7 +387,7 @@ export default function TransactionsPage() {
     return (
       <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4939b0" />
+          <ActivityIndicator size="large" color={BRAND_COLOR_MAIN} />
         </View>
       </SafeAreaView>
     );
@@ -394,16 +396,7 @@ export default function TransactionsPage() {
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <StatusBar style="dark" />
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Text style={styles.backButtonIcon}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.title}>All Transactions</Text>
-        <View style={styles.placeholder} />
-      </View>
+      <AnimatedBackground />
 
       <ScrollView
         style={styles.scrollView}
@@ -660,11 +653,17 @@ export default function TransactionsPage() {
                     }
                   }}
                 >
-                  <View style={styles.transactionIcon}>
-                    <Text style={styles.transactionIconText}>
-                      {transaction.type === "income" ? "💰" : "🛒"}
-                    </Text>
-                  </View>
+                    <View style={styles.transactionIcon}>
+                      <Image
+                        source={
+                          transaction.type === "income"
+                            ? require("../assets/Income Transaction.png")
+                            : require("../assets/Expense Transaction.png")
+                        }
+                        style={styles.transactionIconImage}
+                        resizeMode="contain"
+                      />
+                    </View>
                   <View style={styles.transactionDetails}>
                     <Text style={styles.transactionTitle}>
                       {transaction.title}
@@ -712,27 +711,14 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 10,
   },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  backButtonIcon: {
-    fontSize: 24,
-    color: "#111827",
-    fontWeight: "600",
-  },
   title: {
     fontSize: 24,
     fontWeight: "700",
     color: "#111827",
   },
-  placeholder: {
-    width: 40,
-  },
   scrollView: {
     flex: 1,
+    zIndex: 1,
   },
   quickActionsContainer: {
     marginTop: 16,
@@ -756,17 +742,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   quickActionIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#FFFFFF",
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 8,
-    boxShadow: "0px 2px 4px 0px rgba(73, 57, 176, 0.2)",
-    elevation: 3,
-    borderWidth: 2,
-    borderColor: "#F3F4F6",
   },
   quickActionIconText: {
     fontSize: 24,
@@ -797,8 +775,8 @@ const styles = StyleSheet.create({
     borderColor: "#E5E7EB",
   },
   filterButtonActive: {
-    backgroundColor: "#4939b0",
-    borderColor: "#4939b0",
+    backgroundColor: BRAND_COLOR_MAIN,
+    borderColor: BRAND_COLOR_MAIN,
   },
   filterButtonText: {
     fontSize: 14,
@@ -833,6 +811,10 @@ const styles = StyleSheet.create({
   },
   transactionIconText: {
     fontSize: 20,
+  },
+  transactionIconImage: {
+    width: 23,
+    height: 23,
   },
   transactionDetails: {
     flex: 1,
@@ -896,7 +878,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   activeFilterBadge: {
-    backgroundColor: "#4939b0",
+    backgroundColor: BRAND_COLOR_MAIN,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,

@@ -24,6 +24,7 @@ import { router } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { Skeleton, SkeletonCircle, SkeletonText } from "../components/Skeleton";
 import BottomNav from "../components/BottomNav";
+import { AnimatedBackground, BRAND_COLOR_MAIN, BRAND_COLOR_SECONDARY } from "../components/AnimatedBackground";
 
 const BASE_URL = "https://react-bank-project.eapi.joincoded.com";
 
@@ -287,7 +288,7 @@ export default function ProfilePage() {
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4939b0" />
+          <ActivityIndicator size="large" color={BRAND_COLOR_MAIN} />
         </View>
       </SafeAreaView>
     );
@@ -305,12 +306,6 @@ export default function ProfilePage() {
           >
             <Text style={styles.retryButtonText}>Retry</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <Text style={styles.backButtonText}>Go Back</Text>
-          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -319,21 +314,12 @@ export default function ProfilePage() {
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <StatusBar style="dark" />
+      <AnimatedBackground />
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: 80 }]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <Text style={styles.backButtonIcon}>←</Text>
-          </TouchableOpacity>
-          <Text style={styles.title}>My Profile</Text>
-          <View style={styles.placeholder} />
-        </View>
 
         <View style={styles.profileCard}>
           <TouchableOpacity
@@ -343,7 +329,7 @@ export default function ProfilePage() {
           >
             {updateProfileMutation.isPending ? (
               <View style={styles.profileImage}>
-                <ActivityIndicator size="large" color="#4939b0" />
+                <ActivityIndicator size="large" color={BRAND_COLOR_MAIN} />
               </View>
             ) : profile?.image && !imageError ? (
               <Image
@@ -380,7 +366,11 @@ export default function ProfilePage() {
               </View>
             )}
             <View style={styles.editImageBadge}>
-              <Text style={styles.editImageIcon}>📷</Text>
+              <Image
+                source={require("../assets/Camera.png")}
+                style={styles.editImageIcon}
+                resizeMode="contain"
+              />
             </View>
           </TouchableOpacity>
           <Text style={styles.username}>{profile?.username || "User"}</Text>
@@ -451,6 +441,7 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+    zIndex: 1,
   },
   scrollContent: {
     paddingBottom: 32,
@@ -466,34 +457,29 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#E5E7EB",
   },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  backButtonIcon: {
-    fontSize: 24,
-    color: "#111827",
-    fontWeight: "600",
-  },
   title: {
     fontSize: 24,
     fontWeight: "700",
     color: "#111827",
   },
-  placeholder: {
-    width: 40,
-  },
   profileCard: {
-    backgroundColor: "#4939b0",
+    backgroundColor: BRAND_COLOR_SECONDARY,
     marginHorizontal: 20,
     marginTop: 20,
-    borderRadius: 20,
+    borderRadius: 24,
     padding: 32,
     alignItems: "center",
-    boxShadow: "0px 4px 8px 0px rgba(73, 57, 176, 0.3)",
-    elevation: 5,
+    ...Platform.select({
+      ios: {
+        shadowColor: BRAND_COLOR_SECONDARY,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.3,
+        shadowRadius: 16,
+      },
+      android: {
+        elevation: 10,
+      },
+    }),
   },
   detailsCard: {
     backgroundColor: "#FFFFFF",
@@ -509,9 +495,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   profileImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 114,
+    height: 114,
+    borderRadius: 57,
     borderWidth: 4,
     borderColor: "#FFFFFF",
     justifyContent: "center",
@@ -528,13 +514,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 3,
-    borderColor: "#4939b0",
+    borderColor: BRAND_COLOR_MAIN,
     boxShadow: "0px 2px 4px 0px rgba(0, 0, 0, 0.2)",
     elevation: 4,
   },
   editImageIcon: {
-    fontSize: 20,
-    color: "#4939b0",
+    width: 23,
+    height: 23,
   },
   editImageHint: {
     fontSize: 12,
@@ -543,9 +529,9 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
   },
   profileImagePlaceholder: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 114,
+    height: 114,
+    borderRadius: 57,
     backgroundColor: "#FFFFFF",
     justifyContent: "center",
     alignItems: "center",
@@ -554,7 +540,7 @@ const styles = StyleSheet.create({
   },
   profileImagePlaceholderText: {
     fontSize: 48,
-    color: "#4939b0",
+    color: BRAND_COLOR_MAIN,
     fontWeight: "700",
   },
   username: {
@@ -588,7 +574,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   retryButton: {
-    backgroundColor: "#4939b0",
+    backgroundColor: BRAND_COLOR_MAIN,
     borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 24,
@@ -596,12 +582,6 @@ const styles = StyleSheet.create({
   },
   retryButtonText: {
     color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
-    textAlign: "center",
-  },
-  backButtonText: {
-    color: "#4939b0",
     fontSize: 16,
     fontWeight: "600",
     textAlign: "center",

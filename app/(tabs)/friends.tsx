@@ -9,6 +9,7 @@ import {
   Image,
   ActivityIndicator,
   Alert,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
@@ -19,6 +20,7 @@ import { Skeleton, SkeletonCircle, SkeletonText } from "../../components/Skeleto
 import BottomNav from "../../components/BottomNav";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
+import { AnimatedBackground, BRAND_COLOR_MAIN } from "../../components/AnimatedBackground";
 
 const BASE_URL = "https://react-bank-project.eapi.joincoded.com";
 const FRIENDS_STORAGE_KEY = "@friends_list";
@@ -137,7 +139,7 @@ export default function FriendsPage() {
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4939b0" />
+          <ActivityIndicator size="large" color={BRAND_COLOR_MAIN} />
         </View>
       </SafeAreaView>
     );
@@ -146,9 +148,7 @@ export default function FriendsPage() {
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <StatusBar style="dark" />
-      <View style={styles.header}>
-        <Text style={styles.title}>Friends</Text>
-      </View>
+      <AnimatedBackground />
 
       <ScrollView
         style={styles.scrollView}
@@ -174,7 +174,7 @@ export default function FriendsPage() {
             <Text style={styles.sectionTitle}>Search Results</Text>
             {usersLoading ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="small" color="#4939b0" />
+                <ActivityIndicator size="small" color={BRAND_COLOR_MAIN} />
               </View>
             ) : usersError ? (
               <Text style={styles.errorText}>Failed to load users</Text>
@@ -260,7 +260,11 @@ export default function FriendsPage() {
                     style={styles.removeButton}
                     onPress={() => handleRemoveFriend(friend)}
                   >
-                    <Text style={styles.removeButtonText}>×</Text>
+                    <Image
+                      source={require("../../assets/Close.png")}
+                      style={styles.removeButtonImage}
+                      resizeMode="contain"
+                    />
                   </TouchableOpacity>
                 </View>
               );
@@ -296,6 +300,7 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+    zIndex: 1,
   },
   searchContainer: {
     paddingHorizontal: 20,
@@ -356,7 +361,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: "#4939b0",
+    backgroundColor: BRAND_COLOR_MAIN,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
@@ -378,7 +383,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#4939b0",
+    backgroundColor: BRAND_COLOR_MAIN,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -396,11 +401,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  removeButtonText: {
-    fontSize: 28,
-    color: "#FFFFFF",
-    fontWeight: "600",
-    lineHeight: 28,
+  removeButtonImage: {
+    width: 23,
+    height: 23,
   },
   errorText: {
     fontSize: 14,

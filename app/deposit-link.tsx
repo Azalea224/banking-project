@@ -233,12 +233,6 @@ export default function DepositLinkPage() {
         <StatusBar style="dark" />
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Failed to load deposit link</Text>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <Text style={styles.backButtonText}>Go Back</Text>
-          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -253,16 +247,9 @@ export default function DepositLinkPage() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <Text style={styles.backButtonIcon}>←</Text>
-          </TouchableOpacity>
           <Text style={styles.title}>
             {isOwner ? "Edit Deposit Link" : "Deposit Link"}
           </Text>
-          <View style={styles.placeholder} />
         </View>
 
         <Formik
@@ -439,24 +426,10 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 10,
   },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  backButtonIcon: {
-    fontSize: 24,
-    color: "#111827",
-    fontWeight: "600",
-  },
   title: {
     fontSize: 24,
     fontWeight: "700",
     color: "#111827",
-  },
-  placeholder: {
-    width: 40,
   },
   content: {
     paddingHorizontal: 20,
@@ -582,11 +555,5 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "700",
-  },
-  backButtonText: {
-    color: "#4939b0",
-    fontSize: 16,
-    fontWeight: "600",
-    textAlign: "center",
   },
 });
