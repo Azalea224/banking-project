@@ -441,17 +441,19 @@ export default function HomePage() {
               <SkeletonCircle size={44} style={{ marginLeft: 12 }} />
             </View>
           </View>
-          <View style={styles.balanceCard}>
-            <View style={styles.balanceHeader}>
-              <SkeletonCircle size={60} />
-              <View style={{ flex: 1, marginLeft: 16 }}>
-                <Skeleton width={100} height={14} borderRadius={4} />
-                <Skeleton
-                  width={200}
-                  height={36}
-                  borderRadius={4}
-                  style={{ marginTop: 4 }}
-                />
+          <View style={styles.unifiedCardContainer}>
+            <View style={styles.unifiedCard}>
+              <View style={styles.balanceHeader}>
+                <SkeletonCircle size={60} />
+                <View style={{ flex: 1, marginLeft: 16 }}>
+                  <Skeleton width={100} height={14} borderRadius={4} />
+                  <Skeleton
+                    width={200}
+                    height={36}
+                    borderRadius={4}
+                    style={{ marginTop: 4 }}
+                  />
+                </View>
               </View>
             </View>
           </View>
@@ -626,103 +628,108 @@ export default function HomePage() {
           </View>
         </View>
 
-        <View style={styles.balanceCard}>
-          <View style={styles.balanceHeader}>
-            <View style={styles.profileImageContainer}>
-              {profile?.image && !imageError ? (
-                <Image
-                  source={{
-                    uri: (() => {
-                      const imageValue = profile.image;
-                      if (typeof imageValue === "string") {
-                        return imageValue.startsWith("http")
-                          ? imageValue
-                          : `${BASE_URL}${
-                              imageValue.startsWith("/") ? "" : "/"
-                            }${imageValue}`;
-                      } else if (imageValue && typeof imageValue === "object") {
-                        const imageObj = imageValue as any;
-                        return imageObj.uri || String(imageObj) || "";
-                      }
-                      return "";
-                    })(),
-                  }}
-                  style={styles.profileImage}
-                  onError={() => setImageError(true)}
-                />
-              ) : (
-                <View style={styles.profileImagePlaceholder}>
-                  <Text style={styles.profileImagePlaceholderText}>
-                    {profile?.username?.charAt(0).toUpperCase() ||
-                      username?.charAt(0).toUpperCase() ||
-                      "U"}
-                  </Text>
+        <View style={styles.unifiedCardContainer}>
+          <View style={styles.unifiedCard}>
+            {/* Balance Section */}
+            <View style={styles.balanceSection}>
+              <View style={styles.balanceHeader}>
+                <View style={styles.profileImageContainer}>
+                  {profile?.image && !imageError ? (
+                    <Image
+                      source={{
+                        uri: (() => {
+                          const imageValue = profile.image;
+                          if (typeof imageValue === "string") {
+                            return imageValue.startsWith("http")
+                              ? imageValue
+                              : `${BASE_URL}${
+                                  imageValue.startsWith("/") ? "" : "/"
+                                }${imageValue}`;
+                          } else if (imageValue && typeof imageValue === "object") {
+                            const imageObj = imageValue as any;
+                            return imageObj.uri || String(imageObj) || "";
+                          }
+                          return "";
+                        })(),
+                      }}
+                      style={styles.profileImage}
+                      onError={() => setImageError(true)}
+                    />
+                  ) : (
+                    <View style={styles.profileImagePlaceholder}>
+                      <Text style={styles.profileImagePlaceholderText}>
+                        {profile?.username?.charAt(0).toUpperCase() ||
+                          username?.charAt(0).toUpperCase() ||
+                          "U"}
+                      </Text>
+                    </View>
+                  )}
                 </View>
-              )}
+                <View style={styles.balanceHeaderText}>
+                  <Text style={styles.balanceLabel}>Total Balance</Text>
+                  {profileLoading ? (
+                    <Skeleton width={200} height={36} borderRadius={4} />
+                  ) : (
+                    <Text style={styles.balanceAmount}>{accountBalance} KWD</Text>
+                  )}
+                </View>
+              </View>
             </View>
-            <View style={styles.balanceHeaderText}>
-              <Text style={styles.balanceLabel}>Total Balance</Text>
-              {profileLoading ? (
-                <Skeleton width={200} height={36} borderRadius={4} />
-              ) : (
-                <Text style={styles.balanceAmount}>{accountBalance} KWD</Text>
-              )}
-            </View>
+
+            {/* Achievements Section */}
+            {gamification && (
+              <>
+                <View style={styles.sectionDivider} />
+                <GamificationSummaryCard
+                  level={gamification.level}
+                  totalPoints={gamification.totalPoints}
+                  xp={gamification.xp}
+                  xpToNextLevel={gamification.xpToNextLevel}
+                  levelProgress={gamification.levelProgress}
+                  unlockedCount={
+                    gamification.achievements.filter((a) => a.unlocked).length
+                  }
+                  lockedCount={
+                    gamification.achievements.filter((a) => !a.unlocked).length
+                  }
+                  totalTransactions={gamification.totalTransactions}
+                  variant="dark"
+                  containerMode={true}
+                />
+                {gamification.achievements.filter((a) => a.unlocked).length > 0 && (
+                  <View style={styles.recentAchievementsSection}>
+                    <View style={styles.recentAchievementsHeader}>
+                      <Text style={styles.recentAchievementsTitle}>Recent Achievements</Text>
+                      <TouchableOpacity onPress={() => router.push("/achievements?filter=unlocked")}>
+                        <Text style={styles.seeAllText}>See All</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      style={styles.recentAchievementsScroll}
+                      contentContainerStyle={styles.recentAchievementsList}
+                    >
+                      {gamification.achievements
+                        .filter((a) => a.unlocked)
+                        .slice(0, 5)
+                        .map((achievement) => (
+                          <TouchableOpacity
+                            key={achievement.id}
+                            style={styles.recentAchievementItem}
+                            onPress={() => router.push("/achievements?filter=unlocked")}
+                          >
+                            <Text style={styles.recentAchievementIcon}>{achievement.icon}</Text>
+                            <Text style={styles.recentAchievementName}>{achievement.name}</Text>
+                          </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+                  </View>
+                )}
+              </>
+            )}
           </View>
         </View>
-
-        {gamification && (
-          <View style={styles.achievementsContainer}>
-            <View style={styles.achievementsCard}>
-              <GamificationSummaryCard
-                level={gamification.level}
-                totalPoints={gamification.totalPoints}
-                xp={gamification.xp}
-                xpToNextLevel={gamification.xpToNextLevel}
-                levelProgress={gamification.levelProgress}
-                unlockedCount={
-                  gamification.achievements.filter((a) => a.unlocked).length
-                }
-                lockedCount={
-                  gamification.achievements.filter((a) => !a.unlocked).length
-                }
-                totalTransactions={gamification.totalTransactions}
-                variant="light"
-                containerMode={true}
-              />
-              {gamification.achievements.filter((a) => a.unlocked).length > 0 && (
-                <View style={styles.recentAchievementsSection}>
-                  <View style={styles.recentAchievementsHeader}>
-                    <Text style={styles.recentAchievementsTitle}>Recent Achievements</Text>
-                    <TouchableOpacity onPress={() => router.push("/achievements?filter=unlocked")}>
-                      <Text style={styles.seeAllText}>See All</Text>
-                    </TouchableOpacity>
-                  </View>
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    style={styles.recentAchievementsScroll}
-                    contentContainerStyle={styles.recentAchievementsList}
-                  >
-                    {gamification.achievements
-                      .filter((a) => a.unlocked)
-                      .slice(0, 5)
-                      .map((achievement) => (
-                        <TouchableOpacity
-                          key={achievement.id}
-                          style={styles.recentAchievementItem}
-                          onPress={() => router.push("/achievements?filter=unlocked")}
-                        >
-                          <Text style={styles.recentAchievementIcon}>{achievement.icon}</Text>
-                          <Text style={styles.recentAchievementName}>{achievement.name}</Text>
-                        </TouchableOpacity>
-                      ))}
-                  </ScrollView>
-                </View>
-              )}
-            </View>
-          </View>
-        )}
 
         <View style={styles.quickActionsContainer}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
@@ -998,6 +1005,26 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
   },
+  unifiedCardContainer: {
+    marginHorizontal: 20,
+    marginTop: 20,
+  },
+  unifiedCard: {
+    backgroundColor: "#4939b0",
+    borderRadius: 20,
+    padding: 24,
+    boxShadow: "0px 4px 8px 0px rgba(121, 120, 236, 0.3)",
+    elevation: 5,
+    overflow: "hidden",
+  },
+  balanceSection: {
+    // Balance section styles are now part of unified card
+  },
+  sectionDivider: {
+    height: 1,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    marginVertical: 20,
+  },
   balanceCard: {
     backgroundColor: "#4939b0",
     marginHorizontal: 20,
@@ -1010,7 +1037,7 @@ const styles = StyleSheet.create({
   balanceHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: 0,
   },
   profileImageContainer: {
     marginRight: 16,
@@ -1233,23 +1260,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#6B7280",
   },
-  achievementsContainer: {
-    marginHorizontal: 20,
-    marginTop: 20,
-  },
-  achievementsCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 20,
-    boxShadow: "0px 4px 8px 0px rgba(0, 0, 0, 0.1)",
-    elevation: 5,
-    overflow: "hidden",
-  },
   recentAchievementsSection: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingHorizontal: 0,
+    paddingBottom: 0,
     paddingTop: 20,
     borderTopWidth: 1,
-    borderTopColor: "#F3F4F6",
+    borderTopColor: "rgba(255, 255, 255, 0.2)",
     marginTop: 0,
   },
   recentAchievementsHeader: {
@@ -1260,17 +1276,17 @@ const styles = StyleSheet.create({
   },
   recentAchievementsTitle: {
     fontSize: 20,
-    color: "#111827",
+    color: "#FFFFFF",
     fontWeight: "700",
   },
   recentAchievementsScroll: {
-    marginHorizontal: -20,
-    paddingHorizontal: 20,
+    marginHorizontal: -24,
+    paddingHorizontal: 24,
   },
   recentAchievementsList: {
     flexDirection: "row",
     gap: 12,
-    paddingRight: 20,
+    paddingRight: 24,
   },
   recentAchievementItem: {
     alignItems: "center",
@@ -1278,10 +1294,10 @@ const styles = StyleSheet.create({
     minWidth: 100,
     paddingVertical: 12,
     paddingHorizontal: 16,
-    backgroundColor: "#F9FAFB",
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: "rgba(255, 255, 255, 0.2)",
   },
   recentAchievementIcon: {
     fontSize: 40,
@@ -1289,7 +1305,7 @@ const styles = StyleSheet.create({
   },
   recentAchievementName: {
     fontSize: 12,
-    color: "#111827",
+    color: "#FFFFFF",
     fontWeight: "600",
     textAlign: "center",
   },
