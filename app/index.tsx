@@ -21,6 +21,7 @@ import { getMyProfile, UserProfile } from "../api/auth";
 import { Skeleton, SkeletonText, SkeletonCircle } from "../components/Skeleton";
 import { useGamification } from "../hooks/useGamification";
 import { GamificationSummaryCard } from "../components/GamificationSummaryCard";
+import { useSound } from "../hooks/useSound";
 
 const BASE_URL = "https://react-bank-project.eapi.joincoded.com";
 
@@ -39,6 +40,8 @@ export default function HomePage() {
     useAuth();
   const [selectedFilter, setSelectedFilter] = useState<TransactionFilter>(null);
   const [imageError, setImageError] = useState(false);
+  const [seenTransactionIds, setSeenTransactionIds] = useState<Set<string | number>>(new Set());
+  const { playSound } = useSound();
 
   const {
     data: transactions,
@@ -405,6 +408,42 @@ export default function HomePage() {
       };
     });
   }, [transactions, username, allUsersWithMissing]);
+
+  // Initialize seen transaction IDs on first load
+  useEffect(() => {
+    if (formattedTransactions && formattedTransactions.length > 0 && seenTransactionIds.size === 0) {
+      // Mark all current transactions as seen on initial load
+      const initialIds = new Set<string | number>();
+      formattedTransactions.forEach((transaction) => {
+        initialIds.add(transaction.id);
+      });
+      setSeenTransactionIds(initialIds);
+    }
+  }, [formattedTransactions, seenTransactionIds.size]);
+
+  // Detect new income transactions and play receive sound
+  useEffect(() => {
+    if (!formattedTransactions || formattedTransactions.length === 0 || seenTransactionIds.size === 0) return;
+
+    // Find new income transactions that haven't been seen before
+    const newIncomeTransactions = formattedTransactions.filter(
+      (transaction) =>
+        transaction.type === "income" &&
+        !seenTransactionIds.has(transaction.id)
+    );
+
+    // Play sound for each new income transaction
+    if (newIncomeTransactions.length > 0) {
+      playSound("Receive.mp3");
+      
+      // Update seen transaction IDs
+      const newSeenIds = new Set(seenTransactionIds);
+      newIncomeTransactions.forEach((transaction) => {
+        newSeenIds.add(transaction.id);
+      });
+      setSeenTransactionIds(newSeenIds);
+    }
+  }, [formattedTransactions, seenTransactionIds, playSound]);
 
   // Filter transactions based on selected filter
   const filteredTransactions = useMemo(() => {

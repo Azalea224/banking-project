@@ -20,6 +20,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getUserById, User } from "../api/auth";
 import { transfer, TransferResponse } from "../api/transactions";
 import { useAuth } from "../contexts/AuthContext";
+import { useSound } from "../hooks/useSound";
 
 const depositLinkValidationSchema = Yup.object().shape({
   amount: Yup.string()
@@ -53,6 +54,7 @@ export default function DepositLinkPage() {
     username: currentUsername,
   } = useAuth();
   const queryClient = useQueryClient();
+  const { playSound } = useSound();
 
   // Check if current user is the owner
   const isOwner = useMemo(() => {
@@ -79,6 +81,8 @@ export default function DepositLinkPage() {
     mutationFn: ({ username: targetUsername, amount: transferAmount }) =>
       transfer(targetUsername, { amount: transferAmount }),
     onSuccess: (data, variables) => {
+      // Play send sound
+      playSound("Send.mp3");
       Alert.alert(
         "Success",
         `Transfer of ${variables.amount.toFixed(3)} KWD to ${

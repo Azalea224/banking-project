@@ -17,6 +17,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deposit, DepositResponse } from "../api/transactions";
 import { useAuth } from "../contexts/AuthContext";
 import { router } from "expo-router";
+import { useSound } from "../hooks/useSound";
 
 const depositValidationSchema = Yup.object().shape({
   amount: Yup.string()
@@ -35,6 +36,7 @@ const depositValidationSchema = Yup.object().shape({
 export default function DepositPage() {
   const { isAuthenticated, token, userId } = useAuth();
   const queryClient = useQueryClient();
+  const { playSound } = useSound();
 
   const depositMutation = useMutation<
     DepositResponse,
@@ -44,6 +46,8 @@ export default function DepositPage() {
     mutationFn: ({ amount: depositAmount }) =>
       deposit({ amount: depositAmount }),
     onSuccess: (data, variables) => {
+      // Play deposit sound
+      playSound("Deposit.mp3");
       Alert.alert(
         "Success",
         `Deposit of ${variables.amount.toFixed(3)} KWD was successful!`,

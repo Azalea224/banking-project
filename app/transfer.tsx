@@ -20,6 +20,7 @@ import { getAllUsers, User } from "../api/auth";
 import { transfer, TransferResponse } from "../api/transactions";
 import { useAuth } from "../contexts/AuthContext";
 import { router } from "expo-router";
+import { useSound } from "../hooks/useSound";
 
 const transferValidationSchema = Yup.object().shape({
   amount: Yup.string()
@@ -45,6 +46,7 @@ export default function TransferPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
+  const { playSound } = useSound();
 
   const {
     data: users,
@@ -64,6 +66,8 @@ export default function TransferPage() {
     mutationFn: ({ username: targetUsername, amount: transferAmount }) =>
       transfer(targetUsername, { amount: transferAmount }),
     onSuccess: (data, variables) => {
+      // Play send sound
+      playSound("Send.mp3");
       Alert.alert(
         "Success",
         `Transfer of ${variables.amount.toFixed(3)} KWD to ${
