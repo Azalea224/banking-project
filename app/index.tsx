@@ -617,36 +617,40 @@ export default function HomePage() {
   const accountBalance =
     profile?.balance !== undefined ? formatAmount(profile.balance) : "0.000";
 
-  const quickActions = [
-    {
-      id: 1,
-      label: "Send",
-      icon: require("../assets/Send.png"),
-      route: "/transfer",
-      isImage: true,
-    },
-    {
-      id: 2,
-      label: "Receive",
-      icon: require("../assets/Receive.png"),
-      route: "/generate-link",
-      isImage: true,
-    },
-    {
-      id: 3,
-      label: "Deposit", // Shorter label
-      icon: require("../assets/Deposit.png"),
-      route: "/deposit",
-      isImage: true,
-    },
-    {
-      id: 4,
-      label: "Withdraw", // Shorter label
-      icon: require("../assets/Withdraw.png"),
-      route: "/withdraw",
-      isImage: true,
-    },
-  ];
+  // Stable quickActions array using useMemo to prevent recreation
+  const quickActions = useMemo(
+    () => [
+      {
+        id: 1,
+        label: "Send",
+        icon: require("../assets/Send.png"),
+        route: "/transfer",
+        isImage: true,
+      },
+      {
+        id: 2,
+        label: "Receive",
+        icon: require("../assets/Receive.png"),
+        route: "/generate-link",
+        isImage: true,
+      },
+      {
+        id: 3,
+        label: "Deposit",
+        icon: require("../assets/Deposit.png"),
+        route: "/deposit",
+        isImage: true,
+      },
+      {
+        id: 4,
+        label: "Withdraw",
+        icon: require("../assets/Withdraw.png"),
+        route: "/withdraw",
+        isImage: true,
+      },
+    ],
+    []
+  );
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -1255,8 +1259,8 @@ const styles = StyleSheet.create({
   recentAchievementItem: {
     alignItems: "center",
     justifyContent: "center",
-    width: 60, // Smaller width
-    height: 60, // Smaller height
+    width: 70, // Increased to accommodate larger icons
+    height: 70, // Increased to accommodate larger icons
     paddingVertical: 8,
     paddingHorizontal: 8,
     backgroundColor: "rgba(255, 255, 255, 0.1)",
@@ -1269,8 +1273,8 @@ const styles = StyleSheet.create({
     fontSize: 28, // Smaller icon
   },
   recentAchievementIconImage: {
-    width: 28,
-    height: 28,
+    width: 44,
+    height: 44,
   },
   advancedFiltersContainer: {
     marginBottom: 16,

@@ -1,12 +1,10 @@
+import { Image } from "react-native";
+
 // Preload all app icons at startup for better performance
-// Note: Images loaded via require() are already bundled and cached by React Native
-// This utility ensures all images are accessed at app startup to warm up the cache
-const preloadImages = () => {
+// Uses Image.resolveAssetSource to ensure images are loaded into memory
+const preloadImages = async () => {
   try {
-    // Access all image sources to trigger loading into memory
-    // React Native automatically caches require() images, but accessing them
-    // here ensures they're ready when components render
-    const images = [
+    const imageSources = [
       // Navigation icons
       require("../assets/home.png"),
       require("../assets/Progress.png"),
@@ -47,10 +45,15 @@ const preloadImages = () => {
       require("../assets/Withdraw.png"),
     ];
 
-    // Simply accessing the require() calls ensures they're loaded
-    // React Native handles caching automatically for bundled assets
-    // This is a no-op that ensures all images are "touched" at startup
-    void images;
+    // Resolve all asset sources to ensure they're loaded into memory
+    // This preloads the images so they're ready when components render
+    imageSources.forEach((source) => {
+      try {
+        Image.resolveAssetSource(source);
+      } catch (err) {
+        // Silently continue if one fails
+      }
+    });
   } catch (error) {
     // Silently fail - images will load on demand if preloading fails
     console.warn("Image preloading warning:", error);

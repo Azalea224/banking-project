@@ -312,7 +312,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <StatusBar style="dark" />
       <AnimatedBackground />
       <ScrollView

@@ -351,36 +351,40 @@ export default function TransactionsPage() {
   const hasActiveFilters =
     selectedFilter || startDate || endDate || minAmount || maxAmount;
 
-  const quickActions = [
-    {
-      id: 1,
-      label: "Send",
-      icon: require("../assets/Send.png"),
-      route: "/transfer",
-      isImage: true,
-    },
-    {
-      id: 2,
-      label: "Receive",
-      icon: require("../assets/Receive.png"),
-      route: "/generate-link",
-      isImage: true,
-    },
-    {
-      id: 3,
-      label: "Deposit",
-      icon: require("../assets/Deposit.png"),
-      route: "/deposit",
-      isImage: true,
-    },
-    {
-      id: 4,
-      label: "Withdraw",
-      icon: require("../assets/Withdraw.png"),
-      route: "/withdraw",
-      isImage: true,
-    },
-  ];
+  // Stable quickActions array using useMemo to prevent recreation
+  const quickActions = useMemo(
+    () => [
+      {
+        id: 1,
+        label: "Send",
+        icon: require("../assets/Send.png"),
+        route: "/transfer",
+        isImage: true,
+      },
+      {
+        id: 2,
+        label: "Receive",
+        icon: require("../assets/Receive.png"),
+        route: "/generate-link",
+        isImage: true,
+      },
+      {
+        id: 3,
+        label: "Deposit",
+        icon: require("../assets/Deposit.png"),
+        route: "/deposit",
+        isImage: true,
+      },
+      {
+        id: 4,
+        label: "Withdraw",
+        icon: require("../assets/Withdraw.png"),
+        route: "/withdraw",
+        isImage: true,
+      },
+    ],
+    []
+  );
 
   // Show loading while checking authentication
   if (!isAuthenticated) {

@@ -13,6 +13,7 @@ interface NavItem {
   isImage?: boolean;
 }
 
+// Stable nav items array - defined outside component to prevent recreation
 const navItems: NavItem[] = [
   {
     id: "home",
