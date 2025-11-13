@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -21,6 +21,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { router } from "expo-router";
 import { CAMERA_ICON } from "../constants/imageAssets";
 import StableImage from "../components/StableImage";
+import { Skeleton, SkeletonCircle } from "../components/Skeleton";
 
 const registerValidationSchema = Yup.object().shape({
   username: Yup.string()
@@ -39,6 +40,15 @@ const registerValidationSchema = Yup.object().shape({
 export default function RegisterPage() {
   const { mutate: register, isPending } = useRegister();
   const { login } = useAuth();
+  const [showSkeleton, setShowSkeleton] = useState(true);
+
+  useEffect(() => {
+    // Show skeleton briefly on mount
+    const timer = setTimeout(() => {
+      setShowSkeleton(false);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   const pickImage = async (
     setFieldValue: (field: string, value: any) => void
@@ -145,6 +155,46 @@ export default function RegisterPage() {
       }
     );
   };
+
+  if (showSkeleton) {
+    return (
+      <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+        <StatusBar style="dark" />
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.header}>
+            <Skeleton width={200} height={32} borderRadius={4} style={{ marginBottom: 8 }} />
+            <Skeleton width={150} height={16} borderRadius={4} />
+          </View>
+
+          <View style={styles.form}>
+            <View style={styles.skeletonImageContainer}>
+              <SkeletonCircle size={120} />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Skeleton width={80} height={14} borderRadius={4} style={{ marginBottom: 8 }} />
+              <Skeleton width="100%" height={48} borderRadius={12} />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Skeleton width={80} height={14} borderRadius={4} style={{ marginBottom: 8 }} />
+              <Skeleton width="100%" height={48} borderRadius={12} />
+            </View>
+
+            <Skeleton width="100%" height={52} borderRadius={12} style={{ marginTop: 8 }} />
+
+            <View style={styles.footer}>
+              <Skeleton width={180} height={14} borderRadius={4} />
+            </View>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
@@ -400,5 +450,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#4939b0",
     fontWeight: "600",
+  },
+  skeletonImageContainer: {
+    alignSelf: "center",
+    marginBottom: 32,
   },
 });

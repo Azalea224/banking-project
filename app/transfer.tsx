@@ -12,6 +12,7 @@ import {
   ScrollView,
   Platform,
   Modal,
+  FlatList,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
@@ -229,6 +230,83 @@ export default function TransferPage() {
     }
   };
 
+  // Key extractor for FlatList
+  const keyExtractor = (item: User, index: number) => {
+    const itemId = item._id ?? item.id;
+
+    return itemId?.toString() || item.username || `user-${index}`;
+  };
+
+  // Render user item for FlatList
+  const renderUserItem = ({ item, index }: { item: User; index: number }) => {
+    const itemId = item._id ?? item.id;
+    const selectedId = selectedUser?._id ?? selectedUser?.id;
+    const isSelected =
+      selectedUser !== null &&
+      itemId !== undefined &&
+      selectedId !== undefined &&
+      String(itemId) === String(selectedId);
+
+    return (
+      <TouchableOpacity
+        style={[
+          styles.userItem,
+          isSelected && styles.userItemSelected,
+        ]}
+        onPress={() => {
+          setSelectedUser(item);
+          Keyboard.dismiss();
+        }}
+        activeOpacity={0.7}
+      >
+        {item.image ? (
+          <Image
+            source={{
+              uri: item.image.startsWith("http")
+                ? item.image
+                : `${BASE_URL}${
+                    item.image.startsWith("/") ? "" : "/"
+                  }${item.image}`,
+            }}
+            style={[
+              styles.userImage,
+              isSelected && styles.userImageSelected,
+            ]}
+          />
+        ) : (
+          <View style={[
+            styles.userImagePlaceholder,
+            isSelected && styles.userImagePlaceholderSelected,
+          ]}>
+            <Text style={[
+              styles.userImagePlaceholderText,
+              isSelected && styles.userImagePlaceholderTextSelected,
+            ]}>
+              {item.username?.charAt(0).toUpperCase() || "U"}
+            </Text>
+          </View>
+        )}
+        <View style={styles.userInfo}>
+          <Text style={[
+            styles.userName,
+            isSelected && styles.userNameSelected,
+          ]}>
+            {item.username || "Unknown User"}
+          </Text>
+        </View>
+        {isSelected && (
+          <View style={styles.checkmarkContainer}>
+            <StableImage
+              source={CHECKMARK_ICON}
+              style={styles.checkmark}
+              resizeMode="contain"
+            />
+          </View>
+        )}
+      </TouchableOpacity>
+    );
+  };
+
   // Parse QR code data and find user
   const handleQRCodeScanned = (data: string) => {
     // Prevent multiple scans of the same code or processing multiple scans simultaneously
@@ -375,77 +453,16 @@ export default function TransferPage() {
                       </Text>
                     </View>
                   ) : (
-                    <View style={styles.usersListContainer}>
-                      {filteredUsers.map((item, index) => {
-                        // Compare both id and _id, handle string/number conversion
-                        const itemId = item._id ?? item.id;
-                        const selectedId = selectedUser?._id ?? selectedUser?.id;
-                        const isSelected =
-                          selectedUser !== null &&
-                          itemId !== undefined &&
-                          selectedId !== undefined &&
-                          String(itemId) === String(selectedId);
-                        return (
-                          <TouchableOpacity
-                            key={itemId?.toString() || item.username || `user-${index}`}
-                            style={[
-                              styles.userItem,
-                              isSelected && styles.userItemSelected,
-                            ]}
-                            onPress={() => {
-                              setSelectedUser(item);
-                              Keyboard.dismiss();
-                            }}
-                            activeOpacity={0.7}
-                          >
-                            {item.image ? (
-                              <Image
-                                source={{
-                                  uri: item.image.startsWith("http")
-                                    ? item.image
-                                    : `${BASE_URL}${
-                                        item.image.startsWith("/") ? "" : "/"
-                                      }${item.image}`,
-                                }}
-                                style={[
-                                  styles.userImage,
-                                  isSelected && styles.userImageSelected,
-                                ]}
-                              />
-                            ) : (
-                              <View style={[
-                                styles.userImagePlaceholder,
-                                isSelected && styles.userImagePlaceholderSelected,
-                              ]}>
-                                <Text style={[
-                                  styles.userImagePlaceholderText,
-                                  isSelected && styles.userImagePlaceholderTextSelected,
-                                ]}>
-                                  {item.username?.charAt(0).toUpperCase() || "U"}
-                                </Text>
-                              </View>
-                            )}
-                          <View style={styles.userInfo}>
-                            <Text style={[
-                              styles.userName,
-                              isSelected && styles.userNameSelected,
-                            ]}>
-                              {item.username || "Unknown User"}
-                            </Text>
-                          </View>
-                            {isSelected && (
-                              <View style={styles.checkmarkContainer}>
-                                <StableImage
-                                  source={CHECKMARK_ICON}
-                                  style={styles.checkmark}
-                                  resizeMode="contain"
-                                />
-                              </View>
-                            )}
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </View>
+                    <FlatList
+                      data={filteredUsers}
+                      renderItem={renderUserItem}
+                      keyExtractor={keyExtractor}
+                      
+                      style={styles.usersListContainer}
+                      contentContainerStyle={styles.usersListContent}
+                      showsVerticalScrollIndicator={false}
+                      keyboardShouldPersistTaps="handled"
+                    />
                   )}
                 </View>
               </ScrollView>
@@ -843,6 +860,9 @@ const styles = StyleSheet.create({
   usersListContainer: {
     paddingTop: 8,
   },
+  usersListContent: {
+    paddingBottom: 8,
+  },
   bottomFormSection: {
     position: "absolute",
     bottom: 0,
@@ -895,9 +915,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#6B7280",
     fontWeight: "600",
-  },
-  usersListContainer: {
-    marginTop: 16,
   },
   userItem: {
     flexDirection: "row",
