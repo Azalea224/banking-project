@@ -11,9 +11,11 @@ import {
   Keyboard,
   ScrollView,
   Platform,
+  Modal,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
+import { CameraView, useCameraPermissions } from "expo-camera";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -27,6 +29,7 @@ import {
   EMPTY_STATE_UNLOCKED_ICON,
   CHECKMARK_ICON,
   SEARCH_ICON,
+  CAMERA_ICON,
 } from "../constants/imageAssets";
 import StableImage from "../components/StableImage";
 
@@ -57,6 +60,10 @@ export default function TransferPage() {
   const { username, isAuthenticated, token } = useAuth();
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showScanner, setShowScanner] = useState(false);
+  const [isProcessingScan, setIsProcessingScan] = useState(false);
+  const [lastScannedCode, setLastScannedCode] = useState<string | null>(null);
+  const [permission, requestPermission] = useCameraPermissions();
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
   const { playSound } = useSound();
@@ -222,6 +229,89 @@ export default function TransferPage() {
     }
   };
 
+  // Parse QR code data and find user
+  const handleQRCodeScanned = (data: string) => {
+    // Prevent multiple scans of the same code or processing multiple scans simultaneously
+    if (isProcessingScan || lastScannedCode === data) {
+      return;
+    }
+
+    setIsProcessingScan(true);
+    setLastScannedCode(data);
+    
+    // Close scanner immediately to prevent multiple scans
+    setShowScanner(false);
+
+    try {
+      // Parse the QR code data which should be in format: /deposit-link?userId={userId}&amount={amount}
+      const urlMatch = data.match(/\/deposit-link\?userId=([^&]+)(?:&amount=([^&]+))?/);
+      
+      if (!urlMatch || !urlMatch[1]) {
+        setIsProcessingScan(false);
+        Alert.alert("Invalid QR Code", "The scanned QR code is not a valid payment code.");
+        return;
+      }
+
+      const scannedUserId = decodeURIComponent(urlMatch[1]);
+      
+      // Find user in the users list
+      if (!users || users.length === 0) {
+        setIsProcessingScan(false);
+        Alert.alert("Error", "Users list not loaded. Please try again.");
+        return;
+      }
+
+      const foundUser = users.find((user) => {
+        const userId = user._id ?? user.id;
+        return userId !== undefined && String(userId) === String(scannedUserId);
+      });
+
+      if (!foundUser) {
+        setIsProcessingScan(false);
+        Alert.alert("User Not Found", "The user from the QR code is not available in your contacts.");
+        return;
+      }
+
+      // Auto-select the user
+      setSelectedUser(foundUser);
+      setIsProcessingScan(false);
+      Alert.alert("Success", `Selected ${foundUser.username} from QR code.`);
+    } catch (error) {
+      console.error("Error parsing QR code:", error);
+      setIsProcessingScan(false);
+      Alert.alert("Error", "Failed to parse QR code. Please try again.");
+    }
+  };
+
+  // Handle camera button press
+  const handleCameraPress = async () => {
+    if (Platform.OS === "web") {
+      Alert.alert("Not Available", "QR code scanning is not available on web. Please use the mobile app.");
+      return;
+    }
+
+    if (!permission) {
+      // Permission is still loading
+      return;
+    }
+
+    if (!permission.granted) {
+      const result = await requestPermission();
+      if (!result.granted) {
+        Alert.alert(
+          "Camera Permission Required",
+          "Please grant camera permission to scan QR codes."
+        );
+        return;
+      }
+    }
+
+    // Reset scan state when opening scanner
+    setIsProcessingScan(false);
+    setLastScannedCode(null);
+    setShowScanner(true);
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <AnimatedBackground />
@@ -362,6 +452,21 @@ export default function TransferPage() {
 
               {/* Bottom Form Section - Sticky at Bottom */}
               <View style={[styles.bottomFormSection, { paddingBottom: Math.max(insets.bottom, 20) }]}>
+                {/* Camera Scan Button - Prominent */}
+                {Platform.OS !== "web" && (
+                  <TouchableOpacity
+                    onPress={handleCameraPress}
+                    style={styles.cameraScanButton}
+                  >
+                    <StableImage
+                      source={CAMERA_ICON}
+                      style={styles.cameraScanIcon}
+                      resizeMode="contain"
+                    />
+                    <Text style={styles.cameraScanText}>Scan QR Code</Text>
+                  </TouchableOpacity>
+                )}
+
                 {/* Search Bar */}
                 <View style={styles.searchCard}>
                   <View style={styles.searchContainer}>
@@ -526,6 +631,76 @@ export default function TransferPage() {
           )}
         </Formik>
       </View>
+
+      {/* QR Scanner Modal */}
+      <Modal
+        visible={showScanner}
+        animationType="slide"
+        onRequestClose={() => {
+          setShowScanner(false);
+          setIsProcessingScan(false);
+          setLastScannedCode(null);
+        }}
+      >
+        <SafeAreaView style={styles.scannerContainer} edges={["top", "bottom"]}>
+          <View style={styles.scannerHeader}>
+            <Text style={styles.scannerTitle}>Scan QR Code</Text>
+            <TouchableOpacity
+              onPress={() => {
+                setShowScanner(false);
+                setIsProcessingScan(false);
+                setLastScannedCode(null);
+              }}
+              style={styles.scannerCloseButton}
+            >
+              <Text style={styles.scannerCloseButtonText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+          {permission?.granted ? (
+            <CameraView
+              style={styles.camera}
+              facing="back"
+              onBarcodeScanned={(result) => {
+                if (result.data) {
+                  handleQRCodeScanned(result.data);
+                }
+              }}
+              barcodeScannerSettings={{
+                barcodeTypes: ["qr"],
+              }}
+            >
+              <View style={styles.scannerOverlay}>
+                <View style={styles.scannerFrame} />
+                <Text style={styles.scannerHint}>
+                  Position the QR code within the frame
+                </Text>
+              </View>
+            </CameraView>
+          ) : (
+            <View style={styles.scannerPermissionContainer}>
+              <Text style={styles.scannerPermissionText}>
+                Camera permission is required to scan QR codes.
+              </Text>
+              <TouchableOpacity
+                onPress={async () => {
+                  const result = await requestPermission();
+                  if (!result.granted) {
+                    Alert.alert(
+                      "Permission Required",
+                      "Camera permission is needed to scan QR codes."
+                    );
+                  }
+                }}
+                style={styles.scannerPermissionButton}
+              >
+                <Text style={styles.scannerPermissionButtonText}>
+                  Grant Permission
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -910,5 +1085,106 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: 3,
     fontWeight: "400",
+  },
+  cameraScanButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: BRAND_COLOR_MAIN,
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    marginBottom: 12,
+    boxShadow: "0px 4px 12px 0px rgba(73, 57, 176, 0.4)",
+    elevation: 5,
+  },
+  cameraScanIcon: {
+    width: 24,
+    height: 24,
+    marginRight: 10,
+  },
+  cameraScanText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  scannerContainer: {
+    flex: 1,
+    backgroundColor: "#000000",
+  },
+  scannerHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 16,
+    backgroundColor: "#000000",
+  },
+  scannerTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
+  scannerCloseButton: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+  },
+  scannerCloseButtonText: {
+    fontSize: 24,
+    color: "#FFFFFF",
+    fontWeight: "600",
+  },
+  camera: {
+    flex: 1,
+  },
+  scannerOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  scannerFrame: {
+    width: 250,
+    height: 250,
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+    borderRadius: 12,
+    backgroundColor: "transparent",
+  },
+  scannerHint: {
+    marginTop: 24,
+    fontSize: 16,
+    color: "#FFFFFF",
+    textAlign: "center",
+    paddingHorizontal: 40,
+  },
+  scannerPermissionContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 40,
+    backgroundColor: "#000000",
+  },
+  scannerPermissionText: {
+    fontSize: 16,
+    color: "#FFFFFF",
+    textAlign: "center",
+    marginBottom: 24,
+  },
+  scannerPermissionButton: {
+    backgroundColor: BRAND_COLOR_MAIN,
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+  },
+  scannerPermissionButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
   },
 });

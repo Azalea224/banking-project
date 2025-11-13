@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import * as Clipboard from "expo-clipboard";
+import QRCode from "react-native-qrcode-svg";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -81,6 +82,13 @@ export default function GenerateLinkPage() {
       buttonDisabled: !_id || profileLoading,
     });
   }, [isAuthenticated, profileLoading, profileError, profile, _id]);
+
+  // Generate QR code data based on userId and amount
+  const generateQRData = (amount: string) => {
+    if (!_id) return null;
+    const amountValue = amount && amount.trim() !== "" ? amount : "0";
+    return `/deposit-link?userId=${encodeURIComponent(String(_id))}&amount=${encodeURIComponent(amountValue)}`;
+  };
 
   // Only allow numbers and decimal point
   const handleAmountChange = (
@@ -282,9 +290,9 @@ export default function GenerateLinkPage() {
   }
 
   return (
-      <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
-        <StatusBar style="dark" />
-        <AnimatedBackground />
+    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+      <StatusBar style="dark" />
+      <AnimatedBackground />
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.content}>
           <View style={styles.header}>
@@ -313,9 +321,38 @@ export default function GenerateLinkPage() {
               values,
               errors,
               touched,
-            }) => (
-              <>
-                <View style={styles.formSection}>
+            }) => {
+              const qrData = generateQRData(values.amount);
+              return (
+                <>
+                  {/* QR Code Display */}
+                  {_id && qrData && (
+                    <View style={styles.qrCodeSection}>
+                      <View style={styles.qrCodeCard}>
+                        <Text style={styles.qrCodeTitle}>Scan to Send Money</Text>
+                        {values.amount && values.amount.trim() !== "" ? (
+                          <Text style={styles.qrCodeAmount}>
+                            Amount: {parseFloat(values.amount || "0").toFixed(3)} KWD
+                          </Text>
+                        ) : (
+                          <Text style={styles.qrCodeAmountHint}>Any amount</Text>
+                        )}
+                        <View style={styles.qrCodeWrapper}>
+                          <QRCode
+                            value={qrData}
+                            size={220}
+                            color="#000000"
+                            backgroundColor="#FFFFFF"
+                          />
+                        </View>
+                        <Text style={styles.qrCodeHint}>
+                          Ask the sender to scan this QR code with their app
+                        </Text>
+                      </View>
+                    </View>
+                  )}
+
+                  <View style={styles.formSection}>
                   <View style={styles.infoCard}>
                     <Text style={styles.infoTitle}>Create a Payment Link</Text>
                     <Text style={styles.infoText}>
@@ -406,8 +443,9 @@ export default function GenerateLinkPage() {
                     </Text>
                   )}
                 </View>
-              </>
-            )}
+                </>
+              );
+            }}
           </Formik>
         </View>
       </TouchableWithoutFeedback>
@@ -562,5 +600,51 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  qrCodeSection: {
+    paddingHorizontal: 20,
+    marginTop: 20,
+    marginBottom: 8,
+  },
+  qrCodeCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 24,
+    alignItems: "center",
+    boxShadow: "0px 2px 8px 0px rgba(0, 0, 0, 0.08)",
+    elevation: 3,
+  },
+  qrCodeTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#111827",
+    marginBottom: 8,
+  },
+  qrCodeAmount: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: BRAND_COLOR_MAIN,
+    marginBottom: 16,
+  },
+  qrCodeAmountHint: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#6B7280",
+    marginBottom: 16,
+    fontStyle: "italic",
+  },
+  qrCodeWrapper: {
+    backgroundColor: "#FFFFFF",
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  qrCodeHint: {
+    fontSize: 12,
+    color: "#6B7280",
+    textAlign: "center",
+    marginTop: 8,
   },
 });

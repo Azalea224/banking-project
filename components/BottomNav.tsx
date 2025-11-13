@@ -4,6 +4,7 @@ import { useSegments, useRouter, usePathname } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../contexts/AuthContext";
 import { BRAND_COLOR_MAIN } from "./AnimatedBackground";
+
 import {
   HOME_ICON,
   PROGRESS_ICON,
@@ -12,6 +13,7 @@ import {
   PROFILE_ICON,
 } from "../constants/imageAssets";
 import StableImage from "./StableImage";
+import { Image } from "expo-image";
 
 interface NavItem {
   id: string;
@@ -121,7 +123,7 @@ function BottomNav() {
             <View style={styles.navItemContent}>
               <View style={styles.iconContainer}>
                 {item.isImage ? (
-                  <StableImage
+                  <Image
                     source={item.icon}
                     style={[
                       styles.iconImage,

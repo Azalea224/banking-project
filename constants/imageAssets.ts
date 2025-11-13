@@ -41,4 +41,3 @@ export const SEND_ICON = require("../assets/Send.png");
 export const RECEIVE_ICON = require("../assets/Receive.png");
 export const DEPOSIT_ICON = require("../assets/Deposit.png");
 export const WITHDRAW_ICON = require("../assets/Withdraw.png");
-
