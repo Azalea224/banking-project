@@ -34,7 +34,7 @@ const navItems: NavItem[] = [
   },
   {
     id: "level",
-    label: "Progress",
+    label: "Play",
     route: "/level",
     icon: PROGRESS_ICON,
     isImage: true,

@@ -15,6 +15,7 @@ import {
   Image,
   Modal,
   Platform,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
@@ -265,6 +266,176 @@ export default function LevelPage() {
               </View>
             </View>
           </View>
+        </View>
+
+        {/* Games Section */}
+        <View style={styles.gamesSection}>
+          <Text style={styles.gamesSectionTitle}>Games</Text>
+          
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.gamesScrollView}
+            contentContainerStyle={styles.gamesScrollContent}
+          >
+            {/* Snake Game - Unlocks at Level 2 */}
+            <TouchableOpacity
+              style={[
+                styles.gameCard,
+                gamification.level < 2 && styles.gameCardLocked
+              ]}
+              onPress={() => {
+                if (gamification.level >= 2) {
+                  router.push("/games/snake");
+                } else {
+                  Alert.alert(
+                    "Locked",
+                    `Reach Level 2 to unlock Snake!`,
+                    [{ text: "OK" }]
+                  );
+                }
+              }}
+              disabled={gamification.level < 2}
+            >
+              {gamification.level < 2 && (
+                <View style={styles.lockOverlay}>
+                  <StableImage
+                    source={LOCK_ICON}
+                    style={styles.lockIcon}
+                    resizeMode="contain"
+                  />
+                  <Text style={styles.lockText}>Level 2</Text>
+                </View>
+              )}
+              <View style={styles.gameIconContainer}>
+                <Text style={styles.gameEmoji}>🐍</Text>
+              </View>
+              <Text style={styles.gameName}>Snake</Text>
+            </TouchableOpacity>
+
+            {/* Flappy Bird - Unlocks at Level 6 */}
+            <TouchableOpacity
+              style={[
+                styles.gameCard,
+                gamification.level < 6 && styles.gameCardLocked
+              ]}
+              onPress={() => {
+                if (gamification.level >= 6) {
+                  Alert.alert(
+                    "Coming Soon",
+                    "Flappy Bird will be available soon!",
+                    [{ text: "OK" }]
+                  );
+                } else {
+                  Alert.alert(
+                    "Locked",
+                    `Reach Level 6 to unlock Flappy Bird!`,
+                    [{ text: "OK" }]
+                  );
+                }
+              }}
+              disabled={gamification.level < 6}
+            >
+              {gamification.level < 6 && (
+                <View style={styles.lockOverlay}>
+                  <StableImage
+                    source={LOCK_ICON}
+                    style={styles.lockIcon}
+                    resizeMode="contain"
+                  />
+                  <Text style={styles.lockText}>Level 6</Text>
+                </View>
+              )}
+              <View style={styles.gameIconContainer}>
+                <Text style={styles.gameEmoji}>🐦</Text>
+              </View>
+              <Text style={styles.gameName}>Flappy Bird</Text>
+            </TouchableOpacity>
+
+            {/* Tetris - Unlocks at Level 10 */}
+            <TouchableOpacity
+              style={[
+                styles.gameCard,
+                gamification.level < 10 && styles.gameCardLocked
+              ]}
+              onPress={() => {
+                if (gamification.level >= 10) {
+                  Alert.alert(
+                    "Coming Soon",
+                    "Tetris will be available soon!",
+                    [{ text: "OK" }]
+                  );
+                } else {
+                  Alert.alert(
+                    "Locked",
+                    `Reach Level 10 to unlock Tetris!`,
+                    [{ text: "OK" }]
+                  );
+                }
+              }}
+              disabled={gamification.level < 10}
+            >
+              {gamification.level < 10 && (
+                <View style={styles.lockOverlay}>
+                  <StableImage
+                    source={LOCK_ICON}
+                    style={styles.lockIcon}
+                    resizeMode="contain"
+                  />
+                  <Text style={styles.lockText}>Level 10</Text>
+                </View>
+              )}
+              <View style={styles.gameIconContainer}>
+                <Text style={styles.gameEmoji}>🧩</Text>
+              </View>
+              <Text style={styles.gameName}>Tetris</Text>
+            </TouchableOpacity>
+
+            {/* Grand Theft Auto VI - Unlocks at Level 15 */}
+            <TouchableOpacity
+              style={[
+                styles.gameCard,
+                gamification.level < 15 && styles.gameCardLocked
+              ]}
+              onPress={() => {
+                if (gamification.level >= 15) {
+                  Alert.alert(
+                    "Coming Soon",
+                    "Grand Theft Auto VI will be available soon!",
+                    [{ text: "OK" }]
+                  );
+                } else {
+                  Alert.alert(
+                    "Locked",
+                    `Reach Level 15 to unlock Grand Theft Auto VI!`,
+                    [{ text: "OK" }]
+                  );
+                }
+              }}
+              disabled={gamification.level < 15}
+            >
+              {gamification.level < 15 && (
+                <View style={styles.lockOverlay}>
+                  <StableImage
+                    source={LOCK_ICON}
+                    style={styles.lockIcon}
+                    resizeMode="contain"
+                  />
+                  <Text style={styles.lockText}>Level 15</Text>
+                </View>
+              )}
+              <View style={styles.gameIconContainer}>
+                <Image
+                  source={{
+                    uri: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/Grand_Theft_Auto_VI_logo_%28with_gradient%29.svg/1280px-Grand_Theft_Auto_VI_logo_%28with_gradient%29.svg.png",
+                  }}
+                  style={styles.gameLogo}
+                  resizeMode="contain"
+                />
+              </View>
+              <Text style={styles.gameName}>GTA VI</Text>
+            </TouchableOpacity>
+          </ScrollView>
         </View>
 
         {/* Achievements Section */}
@@ -578,7 +749,7 @@ const styles = StyleSheet.create({
   profileSection: {
     paddingHorizontal: 20,
     paddingTop: Platform.OS === "android" ? 20 : 0, // Adjust for Android
-    paddingBottom: 24,
+    paddingBottom: 8,
   },
   profileCard: {
     backgroundColor: BRAND_COLOR_SECONDARY,
@@ -948,6 +1119,101 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#FFFFFF", // White for dark bg
   },
+  gamesSection: {
+    paddingHorizontal: 20,
+    paddingTop: 0,
+    paddingBottom: 20,
+  },
+  gamesScrollView: {
+    marginTop: 0,
+  },
+  gamesScrollContent: {
+    flexDirection: "row",
+    paddingRight: 20,
+  },
+  gameCard: {
+    width: 100,
+    height: 100,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
+    borderWidth: 2,
+    borderColor: BRAND_COLOR_MAIN,
+    marginRight: 12,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
+  },
+  gameCardLocked: {
+    opacity: 0.5,
+    borderColor: "#D1D5DB",
+  },
+  lockOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    borderRadius: 12,
+    zIndex: 1,
+  },
+  lockIcon: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    width: 24,
+    height: 24,
+    tintColor: "#FFFFFF",
+  },
+  lockText: {
+    position: "absolute",
+    bottom: 8,
+    left: 0,
+    right: 0,
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  gameIconContainer: {
+    marginBottom: 6,
+  },
+  gameEmoji: {
+    fontSize: 28,
+  },
+  gameLogo: {
+    width: 50,
+    height: 50,
+  },
+  gameName: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#111827",
+    textAlign: "center",
+  },
+  unlockedBadge: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    width: 24,
+    height: 24,
+  },
+  unlockedBadgeIcon: {
+    width: 24,
+    height: 24,
+  },
   achievementsSection: {
     paddingHorizontal: 20,
     paddingBottom: 32,
@@ -957,6 +1223,12 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#111827",
     marginBottom: 16,
+  },
+  gamesSectionTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#111827",
+    marginBottom: 4,
   },
   filterContainer: {
     flexDirection: "row",

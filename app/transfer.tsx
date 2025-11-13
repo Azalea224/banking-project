@@ -422,50 +422,43 @@ export default function TransferPage() {
           }) => (
             <>
               {/* Recipient Card - Scrollable Users List */}
-              <ScrollView
-                style={styles.recipientScrollView}
-                contentContainerStyle={styles.recipientScrollContent}
-                showsVerticalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled"
-              >
-                <View style={styles.recipientCard}>
-                  <Text style={styles.cardTitle}>Select Recipient</Text>
-                  {usersLoading ? (
-                    <View style={styles.loadingContainer}>
-                      <ActivityIndicator size="small" color={BRAND_COLOR_MAIN} />
-                      <Text style={styles.loadingText}>Loading users...</Text>
-                    </View>
-                  ) : usersError ? (
-                    <View style={styles.errorContainer}>
-                      <Text style={styles.errorText}>Failed to load users</Text>
-                    </View>
-                  ) : filteredUsers.length === 0 ? (
-                    <View style={styles.emptyContainer}>
-                      <StableImage
-                        source={EMPTY_STATE_UNLOCKED_ICON}
-                        style={styles.emptyIcon}
-                        resizeMode="contain"
-                      />
-                      <Text style={styles.emptyText}>
-                        {searchQuery
-                          ? "No users found"
-                          : "No users available"}
-                      </Text>
-                    </View>
-                  ) : (
-                    <FlatList
-                      data={filteredUsers}
-                      renderItem={renderUserItem}
-                      keyExtractor={keyExtractor}
-                      
-                      style={styles.usersListContainer}
-                      contentContainerStyle={styles.usersListContent}
-                      showsVerticalScrollIndicator={false}
-                      keyboardShouldPersistTaps="handled"
+              <View style={styles.recipientCard}>
+                <Text style={styles.cardTitle}>Select Recipient</Text>
+                {usersLoading ? (
+                  <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="small" color={BRAND_COLOR_MAIN} />
+                    <Text style={styles.loadingText}>Loading users...</Text>
+                  </View>
+                ) : usersError ? (
+                  <View style={styles.errorContainer}>
+                    <Text style={styles.errorText}>Failed to load users</Text>
+                  </View>
+                ) : filteredUsers.length === 0 ? (
+                  <View style={styles.emptyContainer}>
+                    <StableImage
+                      source={EMPTY_STATE_UNLOCKED_ICON}
+                      style={styles.emptyIcon}
+                      resizeMode="contain"
                     />
-                  )}
-                </View>
-              </ScrollView>
+                    <Text style={styles.emptyText}>
+                      {searchQuery
+                        ? "No users found"
+                        : "No users available"}
+                    </Text>
+                  </View>
+                ) : (
+                  <FlatList
+                    data={filteredUsers}
+                    renderItem={renderUserItem}
+                    keyExtractor={keyExtractor}
+                    style={styles.usersListContainer}
+                    contentContainerStyle={styles.usersListContent}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                    nestedScrollEnabled={true}
+                  />
+                )}
+              </View>
 
               {/* Bottom Form Section - Sticky at Bottom */}
               <View style={[styles.bottomFormSection, { paddingBottom: Math.max(insets.bottom, 20) }]}>
@@ -731,11 +724,16 @@ const styles = StyleSheet.create({
     zIndex: 1,
     flex: 1,
   },
-  recipientScrollView: {
-    flex: 1,
-  },
-  recipientScrollContent: {
-    paddingBottom: 300,
+  recipientCard: {
+    backgroundColor: "#FFFFFF",
+    marginHorizontal: 20,
+    marginTop: 8,
+    marginBottom: 8,
+    borderRadius: 20,
+    padding: 24,
+    maxHeight: 400,
+    boxShadow: "0px 2px 8px 0px rgba(0, 0, 0, 0.08)",
+    elevation: 3,
   },
   header: {
     flexDirection: "row",
@@ -846,16 +844,6 @@ const styles = StyleSheet.create({
   },
   quickAmountTextActive: {
     color: "#FFFFFF",
-  },
-  recipientCard: {
-    backgroundColor: "#FFFFFF",
-    marginHorizontal: 20,
-    marginTop: 8,
-    marginBottom: 8,
-    borderRadius: 20,
-    padding: 24,
-    boxShadow: "0px 2px 8px 0px rgba(0, 0, 0, 0.08)",
-    elevation: 3,
   },
   usersListContainer: {
     paddingTop: 8,
